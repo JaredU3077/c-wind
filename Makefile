@@ -11,8 +11,8 @@ LDFLAGS = -L/opt/homebrew/opt/raylib/lib -lraylib -framework OpenGL -framework C
 # For Linux (uncomment if building on Linux)
 # LDFLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 
-# Source files
-SRC = Browserwind.cpp
+# Source files (using main.cpp with modular architecture)
+SRC = main.cpp collision_system.cpp combat.cpp dialog_system.cpp environment_manager.cpp environmental_object.cpp game_state.cpp interaction_system.cpp npc.cpp player_system.cpp render_utils.cpp testing_system.cpp world_builder.cpp
 OBJ = $(SRC:.cpp=.o)
 TARGET = Browserwind
 

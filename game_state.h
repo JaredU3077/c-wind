@@ -29,6 +29,10 @@ struct GameState {
     bool isGrounded = true;
     float jumpVelocity = 0.0f;
 
+    // Combat timing
+    float lastSwingTime = 0.0f;
+    const float swingCooldown = 0.5f; // 500ms between swings
+
     // Stats
     int swingsPerformed = 0;
     int meleeHits = 0;

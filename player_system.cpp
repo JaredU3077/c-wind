@@ -1,6 +1,8 @@
 // player_system.cpp
 #include "player_system.h"
 #include "collision_system.h"
+#include "raylib.h"
+#include "raymath.h"  // For Vector3Subtract, Vector3Add
 
 void updatePlayer(Camera3D& camera, GameState& state, const EnvironmentManager& environment, float deltaTime) {
     const float gravity = -15.0f;

@@ -1,6 +1,7 @@
 // testing_system.cpp
 #include "testing_system.h"
 #include "collision_system.h"
+#include "environment_manager.h"  // For EnvironmentManager
 
 void handleTesting(Camera3D camera, const EnvironmentManager& environment, GameState& state) {
     if ((IsCursorHidden() && !state.mouseReleased) || state.isInDialog) {

@@ -17,8 +17,6 @@ void renderBuildingInterior(const Building& building) {
 
     Vector3 ceilingPos = {building.position.x, building.position.y + buildingSize.y/2 - 0.05f, building.position.z};
     DrawCube(ceilingPos, buildingSize.x * 0.9f, 0.1f, buildingSize.z * 0.9f, LIGHTGRAY);
-
-    DrawSphere(building.position, 2.0f, Fade(WHITE, 0.1f));
 }
 
 void renderNPC(const NPC& npc, Camera3D camera, float currentTime) {
@@ -38,8 +36,6 @@ void renderNPC(const NPC& npc, Camera3D camera, float currentTime) {
     Vector3 rightLegPos = {npc.position.x + 0.25f, npc.position.y - 0.4f, npc.position.z};
     DrawCylinder(leftLegPos, 0.2f, 0.15f, 0.8f, 8, Fade(npc.color, 0.8f));
     DrawCylinder(rightLegPos, 0.2f, 0.15f, 0.8f, 8, Fade(npc.color, 0.8f));
-
-    DrawSphere(npc.position, 1.2f, Fade(npc.color, 0.1f));
 
     Vector3 toNPC = {
         npc.position.x - camera.position.x,

@@ -1,6 +1,7 @@
 // collision_system.cpp
 #include "collision_system.h"
 #include "environmental_object.h"  // For Building
+#include "environment_manager.h"   // For EnvironmentManager
 
 bool CollisionSystem::checkCollision(const CollisionBounds& bounds1, const CollisionBounds& bounds2) {
     switch (bounds1.shape) {

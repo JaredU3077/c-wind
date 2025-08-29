@@ -60,7 +60,8 @@ int main(void)
     // Initialize combat system
     initCombat();
 
-    // NPCs are now initialized in Browserwind.cpp to prevent conflicts
+    // Initialize NPCs
+    initNPCs();
 
     // Main game loop with custom ESC handling
     float lastEscPressTime = -10.0f; // Initialize to a time long ago
@@ -108,7 +109,7 @@ int main(void)
         handleInteractions(camera, environment, state, currentTime);
 
         // Melee combat mechanics (longsword) - disabled during dialog
-        if (!state.isInDialog && IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && (currentTime - lastSwingTime) > swingCooldown) {
+        if (!state.isInDialog && IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && (currentTime - state.lastSwingTime) > state.swingCooldown) {
             updateMeleeSwing(camera, currentTime, state);
         }
 
@@ -200,7 +201,7 @@ int main(void)
 
                 // Current location indicator
                 std::string locationText = "Town Square";
-                Color locationColor = GREEN;
+                Color locationColor = WHITE;
                 if (state.isInBuilding && state.currentBuilding >= 0) {
                     auto objects = environment.getAllObjects();
                     if (state.currentBuilding < objects.size()) {

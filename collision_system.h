@@ -3,10 +3,12 @@
 #define COLLISION_SYSTEM_H
 
 #include "raylib.h"
-#include "environment_manager.h"
 #include "npc.h"  // For checkNPCCollision
 #include <algorithm>  // For std::clamp
 #include <cmath>
+
+// Forward declaration to avoid circular dependency
+class EnvironmentManager;
 
 enum class CollisionShape {
     BOX,

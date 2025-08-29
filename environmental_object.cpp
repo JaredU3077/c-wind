@@ -1,5 +1,7 @@
 // environmental_object.cpp
 #include "environmental_object.h"
+#include "collision_system.h"  // For CollisionBounds and CollisionShape
+#include "rlgl.h"             // For rlPushMatrix, rlTranslatef, rlRotatef, rlPopMatrix
 #include <cmath>
 
 Building::Building(Vector3 pos, Vector3 size, Color color, const std::string& name,

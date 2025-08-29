@@ -5,11 +5,27 @@
 // MAX_NPCS is now defined in npc.h
 NPC npcs[MAX_NPCS];
 
-// Note: NPCs are now initialized in Browserwind.cpp to avoid conflicts
-// This function is kept for compatibility but should not be called
+// Initialize NPCs with proper building positioning
 void initNPCs() {
-    // NPCs are initialized in Browserwind.cpp with proper building positioning
-    // This prevents conflicts between different initialization locations
+    // Mayor White in Mayor's Building
+    npcs[0] = {
+        .position = {0.0f, 0.0f, -15.5f},
+        .name = "Mayor White",
+        .dialog = "Greetings, citizen! Welcome to my office. What brings you here today?",
+        .color = WHITE,
+        .canInteract = true,
+        .interactionRadius = 2.5f
+    };
+
+    // Buster Shoppin in Shop Building
+    npcs[1] = {
+        .position = {12.0f, 0.0f, -5.0f},
+        .name = "Buster Shoppin",
+        .dialog = "Welcome to my shop! I've got all sorts of goods and supplies for sale.",
+        .color = GREEN,
+        .canInteract = true,
+        .interactionRadius = 2.5f
+    };
 }
 
 bool checkNPCCollision(Vector3 capsulePos, float capsuleRadius, float capsuleHeight, int excludeNPC) {
