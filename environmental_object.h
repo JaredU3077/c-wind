@@ -6,6 +6,9 @@
 #include <string>
 #include <memory>
 
+// Forward declaration to avoid circular dependency
+struct CollisionBounds;
+
 class EnvironmentalObject {
 public:
     virtual ~EnvironmentalObject() = default;

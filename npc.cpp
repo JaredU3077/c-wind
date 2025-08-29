@@ -2,7 +2,7 @@
 #include "npc.h"
 #include <cmath>
 
-const int MAX_NPCS = 2;
+// MAX_NPCS is now defined in npc.h
 NPC npcs[MAX_NPCS];
 
 // Note: NPCs are now initialized in Browserwind.cpp to avoid conflicts

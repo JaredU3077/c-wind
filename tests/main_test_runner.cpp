@@ -22,7 +22,6 @@ bool testGameIntegration() {
     Vector3 cube1Pos = {-4.0f, 1.0f, 0.0f};
     Vector3 cube2Pos = {4.0f, 1.0f, 0.0f};
     Vector3 groundPos = {0.0f, 0.0f, 0.0f};
-    Vector2 groundSize = {16.0f, 16.0f};
 
     // Validate all objects are positioned correctly relative to camera
     TEST_ASSERT_TRUE(cube1Pos.x < camera.position.x); // Cube1 left of camera

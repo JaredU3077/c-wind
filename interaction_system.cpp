@@ -13,42 +13,10 @@ void handleInteractions(Camera3D& camera, EnvironmentManager& environment, GameS
         lastEPressTime = currentTime;
     }
 
-    auto objects = environment.getAllObjects();
-    for (size_t i = 0; i < objects.size(); ++i) {
-        if (auto building = std::dynamic_pointer_cast<Building>(objects[i])) {
-            if (building->isInteractive()) {
-                Vector3 doorPos = building->getDoorPosition();
-                Vector3 toDoor = {
-                    doorPos.x - camera.position.x,
-                    doorPos.y - camera.position.y,
-                    doorPos.z - camera.position.z
-                };
-                float distance = sqrtf(toDoor.x * toDoor.x + toDoor.y * toDoor.y + toDoor.z * toDoor.z);
+    // Building interactions are now handled below with priority logic
 
-                if (distance <= 3.0f && !state.isInBuilding) {
-                    nearInteractable = true;
-                    interactableName = "Press E to enter " + building->getName();
-                    if (eKeyPressed) {
-                        state.isInBuilding = true;
-                        state.currentBuilding = static_cast<int>(i);
-                        state.lastOutdoorPosition = camera.position;
-                        camera.position = {building->position.x, 1.75f, building->position.z + 2.0f};
-                        camera.target = {building->position.x, 1.55f, building->position.z + 5.0f};
-                        state.playerY = 0.0f;
-                        state.testBuildingEntry = true;
-                        break;
-                    }
-                } else if (state.isInBuilding && state.currentBuilding == static_cast<int>(i) && eKeyPressed) {
-                    state.isInBuilding = false;
-                    camera.position = state.lastOutdoorPosition;
-                    camera.target = {state.lastOutdoorPosition.x, state.lastOutdoorPosition.y - 0.2f, state.lastOutdoorPosition.z - 5.0f};
-                    state.currentBuilding = -1;
-                    break;
-                }
-            }
-        }
-    }
-
+    // Check for NPC interactions first (higher priority when inside building)
+    bool interactingWithNPC = false;
     for (int n = 0; n < MAX_NPCS; n++) {
         bool npcVisible = false;
 
@@ -71,6 +39,47 @@ void handleInteractions(Camera3D& camera, EnvironmentManager& environment, GameS
                 if (eKeyPressed && !state.isInDialog) {
                     startDialog(n, state);
                     state.testNPCInteraction = true;
+                    interactingWithNPC = true;  // Flag that we're interacting with NPC
+                    break;  // Exit the NPC loop once we find one to interact with
+                }
+            }
+        }
+    }
+
+    // Only check door interactions if we're not interacting with an NPC
+    if (!interactingWithNPC) {
+        auto objects = environment.getAllObjects();
+        for (size_t i = 0; i < objects.size(); ++i) {
+            if (auto building = std::dynamic_pointer_cast<Building>(objects[i])) {
+                if (building->isInteractive()) {
+                    Vector3 doorPos = building->getDoorPosition();
+                    Vector3 toDoor = {
+                        doorPos.x - camera.position.x,
+                        doorPos.y - camera.position.y,
+                        doorPos.z - camera.position.z
+                    };
+                    float distance = sqrtf(toDoor.x * toDoor.x + toDoor.y * toDoor.y + toDoor.z * toDoor.z);
+
+                    if (distance <= 3.0f && !state.isInBuilding) {
+                        nearInteractable = true;
+                        interactableName = "Press E to enter " + building->getName();
+                        if (eKeyPressed) {
+                            state.isInBuilding = true;
+                            state.currentBuilding = static_cast<int>(i);
+                            state.lastOutdoorPosition = camera.position;
+                            camera.position = {building->position.x, 1.75f, building->position.z + 2.0f};
+                            camera.target = {building->position.x, 1.55f, building->position.z - 2.0f}; // Look toward NPC
+                            state.playerY = 0.0f;
+                            state.testBuildingEntry = true;
+                            break;
+                        }
+                    } else if (state.isInBuilding && state.currentBuilding == static_cast<int>(i) && eKeyPressed) {
+                        state.isInBuilding = false;
+                        camera.position = state.lastOutdoorPosition;
+                        camera.target = {state.lastOutdoorPosition.x, state.lastOutdoorPosition.y - 0.2f, state.lastOutdoorPosition.z - 5.0f};
+                        state.currentBuilding = -1;
+                        break;
+                    }
                 }
             }
         }

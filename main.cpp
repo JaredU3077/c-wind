@@ -17,28 +17,35 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <stdexcept>
 
 int main(void)
 {
-    // Initialization
-    const int screenWidth = 1920;
-    const int screenHeight = 1080;
+    try {
+        // Initialization
+        const int screenWidth = 1920;
+        const int screenHeight = 1080;
 
-    InitWindow(screenWidth, screenHeight, "Browserwind - 3D FPS Game (1920x1080)");
+        InitWindow(screenWidth, screenHeight, "Browserwind - 3D FPS Game (1920x1080)");
 
-    // Define the camera
-    Camera3D camera = {
-        .position = (Vector3){ 4.0f, 1.75f, 4.0f },   // Camera starting position (eye height)
-        .target = (Vector3){ 0.0f, 1.55f, 0.0f },     // Camera looking at point
-        .up = (Vector3){ 0.0f, 1.0f, 0.0f },         // Camera up vector (rotation towards target)
-        .fovy = 60.0f,                               // Camera field-of-view Y
-        .projection = CAMERA_PERSPECTIVE              // Camera projection type
-    };
+        // Verify window was created successfully
+        if (!IsWindowReady()) {
+            throw std::runtime_error("Failed to initialize game window");
+        }
 
-    // Hide and capture mouse cursor for FPS gameplay
-    DisableCursor(); // Mouse starts captured
+        // Define the camera
+        Camera3D camera = {
+            .position = (Vector3){ 4.0f, 1.75f, 4.0f },   // Camera starting position (eye height)
+            .target = (Vector3){ 0.0f, 1.55f, 0.0f },     // Camera looking at point
+            .up = (Vector3){ 0.0f, 1.0f, 0.0f },         // Camera up vector (rotation towards target)
+            .fovy = 60.0f,                               // Camera field-of-view Y
+            .projection = CAMERA_PERSPECTIVE              // Camera projection type
+        };
 
-    SetTargetFPS(60);  // Set our game to run at 60 frames-per-second
+        // Hide and capture mouse cursor for FPS gameplay
+        DisableCursor(); // Mouse starts captured
+
+        SetTargetFPS(60);  // Set our game to run at 60 frames-per-second
 
     // Central game state
     GameState state;
@@ -247,4 +254,22 @@ int main(void)
     CloseWindow();  // Close window and OpenGL context
 
     return 0;
+
+    } catch (const std::exception& e) {
+        std::cerr << "Fatal error during game execution: " << e.what() << std::endl;
+
+        // Ensure we clean up resources even on error
+        EnableCursor();  // Make sure cursor is visible for error messages
+        CloseWindow();   // Clean up window resources
+
+        return EXIT_FAILURE;
+    } catch (...) {
+        std::cerr << "Unknown fatal error occurred during game execution" << std::endl;
+
+        // Ensure we clean up resources even on unknown error
+        EnableCursor();
+        CloseWindow();
+
+        return EXIT_FAILURE;
+    }
 }

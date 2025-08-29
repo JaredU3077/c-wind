@@ -32,24 +32,18 @@ bool testMemoryUsage() {
     // Test basic memory allocation patterns
     // This is a simplified test - in a real scenario we'd use memory profiling tools
 
-    // Test vector allocations
-    Vector3* testVector = new Vector3{1.0f, 2.0f, 3.0f};
-    TEST_ASSERT_TRUE(testVector != nullptr);
-    TEST_ASSERT_EQUAL(testVector->x, 1.0f);
-    TEST_ASSERT_EQUAL(testVector->y, 2.0f);
-    TEST_ASSERT_EQUAL(testVector->z, 3.0f);
+    // Test vector allocations (using direct initialization)
+    Vector3 testVector{1.0f, 2.0f, 3.0f};
+    TEST_ASSERT_EQUAL(testVector.x, 1.0f);
+    TEST_ASSERT_EQUAL(testVector.y, 2.0f);
+    TEST_ASSERT_EQUAL(testVector.z, 3.0f);
 
-    delete testVector;
-
-    // Test Color allocations
-    Color* testColor = new Color{255, 0, 0, 255};
-    TEST_ASSERT_TRUE(testColor != nullptr);
-    TEST_ASSERT_EQUAL(testColor->r, 255);
-    TEST_ASSERT_EQUAL(testColor->g, 0);
-    TEST_ASSERT_EQUAL(testColor->b, 0);
-    TEST_ASSERT_EQUAL(testColor->a, 255);
-
-    delete testColor;
+    // Test Color allocations (using direct initialization)
+    Color testColor{255, 0, 0, 255};
+    TEST_ASSERT_EQUAL(testColor.r, 255);
+    TEST_ASSERT_EQUAL(testColor.g, 0);
+    TEST_ASSERT_EQUAL(testColor.b, 0);
+    TEST_ASSERT_EQUAL(testColor.a, 255);
 
     return true;
 }
@@ -120,9 +114,7 @@ bool testGameLoopEfficiency() {
         // Simulate minimal game logic
         cameraPos.x += 0.01f;
 
-        // Simulate draw operations
-        Color cubeColor = RED;
-        Vector3 cubePos = {-4.0f, 1.0f, 0.0f};
+        // Simulate draw operations (no unused variables needed)
 
         auto loopEnd = std::chrono::high_resolution_clock::now();
         double loopTime = std::chrono::duration<double, std::milli>(loopEnd - loopStart).count();

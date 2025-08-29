@@ -1,0 +1,298 @@
+---
+alwaysApply: true
+description: AI assistance directives for Browserwind development - code generation preferences, error prevention, and project-specific intelligence
+---
+
+# Browserwind AI Assistance Directives
+
+## 🎯 Code Generation Preferences
+
+### Modern C++ Idioms
+When generating code, **always** use:
+- Smart pointers (`std::unique_ptr`, `std::shared_ptr`) instead of raw pointers
+- Range-based `for` loops: `for (auto& item : container)`
+- Auto type deduction: `auto result = calculateValue()`
+- Lambda functions for callbacks and algorithms
+- `constexpr` for compile-time constants
+- RAII pattern for resource management
+
+### Fantasy-Themed Naming
+When creating new classes, functions, or variables:
+- **Classes**: Use fantasy/medieval terminology
+  - `TavernKeeper`, `SpellMerchant`, `QuestGiver`
+  - `LongswordSwing`, `MagicBolt`, `EldritchPortal`
+- **Systems**: Clear, descriptive names
+  - `WorldBuilder`, `TerrainGenerator`, `WeatherSystem`
+  - `BehaviorTree`, `PathFinder`, `DecisionMaker`
+
+### Code Structure Patterns
+```cpp
+// ✅ PREFERRED: Modern C++ patterns
+class TavernKeeper : public NPC {
+public:
+    TavernKeeper() : NPC("Innkeeper", NPCType::MERCHANT) {}
+
+    void interact(Player& player) override {
+        auto dialogue = generateDialogue();
+        showDialogueWindow(dialogue);
+    }
+
+private:
+    std::vector<std::string> inventory_;
+    std::unique_ptr<DialogueTree> dialogueTree_;
+};
+```
+
+## 🚨 Error Prevention
+
+### Memory Safety
+**Always warn about** and **prevent**:
+- Raw pointer usage in game code
+- Missing `delete`/`delete[]` calls
+- Potential null pointer dereferences
+- Memory leaks in RAII classes
+
+### Uninitialized Variables
+**Flag immediately**:
+```cpp
+// ❌ BAD: Uninitialized variables
+Vector3 position;        // Use {0, 0, 0}
+float health;            // Use 0.0f
+bool isAlive;            // Use false
+
+// ✅ GOOD: Always initialize
+Vector3 position = {0.0f, 0.0f, 0.0f};
+float health = 100.0f;
+bool isAlive = true;
+```
+
+### Exception Safety
+**Suggest exception-safe patterns**:
+```cpp
+// ✅ PREFERRED: Exception-safe resource management
+class ResourceManager {
+public:
+    ResourceManager() {
+        try {
+            loadTextures();
+            loadSounds();
+            initializeSystems();
+        } catch (const LoadException& e) {
+            LOG_ERROR("Failed to initialize resources: {}", e.what());
+            cleanup();  // Always cleanup on failure
+            throw;
+        }
+    }
+
+    ~ResourceManager() {
+        cleanup();  // RAII cleanup
+    }
+};
+```
+
+## 🔧 Automatic Code Improvements
+
+### Refactor Suggestions
+**Automatically suggest** when encountering:
+- Raw pointers → Smart pointers
+- C-style arrays → `std::vector` or `std::array`
+- Manual loops → Range-based loops
+- Magic numbers → Named constants
+- Deep inheritance → Composition/ECS
+
+### Pattern Recognition
+**Recognize and suggest improvements for**:
+- Game object hierarchies → ECS components
+- Update/render coupling → Separate systems
+- Global state → Dependency injection
+- Tight coupling → Observer pattern
+
+## 🎮 Browserwind-Specific Intelligence
+
+### Morrowind-Inspired Features
+**Suggest appropriate implementations for**:
+- **Quest System**: Objectives, rewards, branching narratives
+- **Magic System**: Spells, mana, casting mechanics
+- **Faction System**: Reputation, alliances, conflicts
+- **Inventory System**: Items, equipment, crafting
+- **Dialogue System**: Branching conversations, NPC relationships
+
+### Game Balance Suggestions
+**Recommend balancing adjustments for**:
+- Combat difficulty curves
+- Experience/reward scaling
+- Resource management (health, mana, stamina)
+- NPC behavior patterns
+- World exploration incentives
+
+## 🧪 Testing & Quality Assurance
+
+### Unit Test Generation
+**Automatically generate tests for**:
+```cpp
+// When creating new classes, suggest:
+class CombatSystem {
+public:
+    float calculateDamage(const Weapon& weapon, const Armor& armor) {
+        // Implementation
+    }
+};
+
+// Auto-generate test structure:
+TEST(CombatSystem, CalculateDamage) {
+    CombatSystem combat;
+
+    Weapon sword{50.0f, DamageType::SLASHING};
+    Armor leather{20.0f, ArmorType::LIGHT};
+
+    float damage = combat.calculateDamage(sword, leather);
+    EXPECT_GT(damage, 0.0f);
+    EXPECT_LT(damage, sword.baseDamage);
+}
+```
+
+### Performance Monitoring
+**Suggest profiling for**:
+- Hot functions (called frequently)
+- Memory allocations (especially in loops)
+- Rendering bottlenecks
+- AI pathfinding performance
+
+## 📝 Documentation Standards
+
+### Function Documentation
+**Auto-generate documentation templates**:
+```cpp
+/**
+ * Casts a magical spell with the specified parameters
+ * @param spell The spell to cast
+ * @param target The target entity (can be nullptr for area effects)
+ * @param caster The entity casting the spell
+ * @return true if spell was cast successfully, false otherwise
+ */
+bool castSpell(const Spell& spell, Entity* target, const Entity& caster);
+```
+
+### Class Documentation
+**Suggest comprehensive class docs**:
+```cpp
+/**
+ * Manages the magical spell casting system for Browserwind
+ *
+ * Responsibilities:
+ * - Spell validation and resource checking
+ * - Damage calculation and application
+ * - Visual effects and particle systems
+ * - Cooldown management and spell balancing
+ *
+ * Dependencies:
+ * - Entity system for targets and casters
+ * - Resource system for mana management
+ * - Particle system for visual effects
+ */
+class SpellCastingSystem {
+    // Implementation
+};
+```
+
+## 🎯 Code Review Suggestions
+
+### Anti-Pattern Detection
+**Flag immediately**:
+- Singleton overuse (prefer dependency injection)
+- God objects (single class doing too many things)
+- Tight coupling between systems
+- Performance anti-patterns
+
+### Best Practice Enforcement
+**Ensure compliance with**:
+- Browserwind coding standards
+- Performance budgets
+- Memory management rules
+- Exception safety requirements
+
+## 🔄 Refactoring Assistance
+
+### Code Smell Detection
+**Identify and suggest fixes for**:
+- Long functions (>50 lines) → Break into smaller functions
+- Duplicate code → Extract common functionality
+- Complex conditionals → Simplify with early returns
+- Large classes → Split into smaller, focused classes
+
+### Modernization Suggestions
+**Propose updates to**:
+- Legacy C patterns → Modern C++
+- Old C++ idioms → C++11/14/17 features
+- Performance bottlenecks → Optimized algorithms
+- Memory management → Smart pointers and RAII
+
+## 🚀 Feature Development Support
+
+### System Architecture
+**Suggest appropriate patterns for**:
+- New gameplay systems → ECS integration
+- UI components → Consistent styling
+- Audio systems → Spatial audio setup
+- Networking → Client-server architecture
+
+### Integration Guidance
+**Provide guidance for**:
+- System communication → Event-driven architecture
+- Data persistence → Serialization strategies
+- Cross-platform compatibility → Abstraction layers
+- Performance optimization → Profiling and measurement
+
+## 📊 Performance Intelligence
+
+### Budget Tracking
+**Monitor and suggest improvements for**:
+- Frame time budgets (16.67ms at 60 FPS)
+- Memory usage limits (2GB desktop target)
+- Draw call counts (<1000 per frame)
+- CPU/GPU utilization targets
+
+### Optimization Suggestions
+**Recommend based on context**:
+- Rendering bottlenecks → Batching, LOD, culling
+- Memory issues → Pooling, compression, streaming
+- CPU bottlenecks → Multithreading, caching, algorithms
+- Asset loading → Asynchronous loading, compression
+
+## 🎨 UI/UX Consistency
+
+### Interface Patterns
+**Maintain consistency across**:
+- Button layouts and styling
+- Color schemes and themes
+- Interaction feedback
+- Navigation patterns
+
+### User Experience
+**Suggest improvements for**:
+- Accessibility features
+- Input responsiveness
+- Visual feedback systems
+- Error handling and user communication
+
+---
+
+## 💡 AI Behavior Guidelines
+
+### Response Style
+- **Proactive**: Suggest improvements before being asked
+- **Educational**: Explain reasoning behind suggestions
+- **Context-Aware**: Understand Browserwind's fantasy RPG context
+- **Performance-Focused**: Always consider optimization implications
+
+### Code Quality Focus
+- **Readability**: Clear, self-documenting code
+- **Maintainability**: Modular, well-structured systems
+- **Performance**: Efficient algorithms and data structures
+- **Safety**: Memory-safe, exception-safe code
+
+### Project Understanding
+- **Domain Knowledge**: Morrowind-inspired fantasy RPG mechanics
+- **Technical Stack**: C++11/14/17, raylib, modern game development
+- **Architecture**: ECS pattern, modular systems, performance-first
+- **Goals**: Production-quality game engine with modding support

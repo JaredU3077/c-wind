@@ -1,0 +1,60 @@
+---
+alwaysApply: true
+description: Browserwind project philosophy, naming conventions, and overall architecture guidance
+---
+
+# Browserwind Project Philosophy & Naming Conventions
+
+## 🎯 Project Identity
+Browserwind is a fantasy-themed 3D FPS game inspired by Morrowind mechanics, blending exploration, RPG elements, and fast-paced combat in a first-person perspective.
+
+## 🏷️ Fantasy-Themed Naming Conventions
+
+### Classes & Components
+- **NPC Classes**: `TavernKeeper`, `Blacksmith`, `SpellMerchant`, `QuestGiver`
+- **Combat Systems**: `LongswordSwing`, `MagicBolt`, `ShieldBash`, `SpellWeaver`
+- **Environment**: `ManaPool`, `EldritchPortal`, `AncientOak`, `CrystalFormation`
+- **UI Elements**: `SpellbookUI`, `InventoryPanel`, `QuestJournal`
+
+### System Separation
+- **Graphics/Rendering**: `RenderUtils`, `TextureAtlas`, `ShaderForge`, `LightManager`
+- **Physics/Collision**: `PhysicsRealm`, `CollisionSphere`, `MovementResolver`, `GravityWell`
+- **AI/Behavior**: `BehaviorTree`, `PathFinder`, `DecisionMaker`, `PerceptionSphere`
+- **World/Environment**: `WorldBuilder`, `TerrainGenerator`, `WeatherSystem`, `BiomeManager`
+
+### File Organization
+```
+Browserwind/
+├── Core/           # GameEngine, GameState, Configuration
+├── Systems/        # InputSystem, RenderSystem, PhysicsSystem
+├── Gameplay/       # CombatSystem, NPCSystem, QuestSystem
+├── World/          # EnvironmentSystem, WorldBuilder
+└── Utils/          # MathUtils, DebugUtils
+```
+
+## 🎨 Code Style Philosophy
+
+### Consistency First
+- **Uniformity**: All code follows the same patterns
+- **Predictability**: Developers can anticipate code structure
+- **Maintainability**: Clear, consistent patterns reduce cognitive load
+
+### Browserwind-Specific Patterns
+- Fantasy-themed naming for game entities and systems
+- Performance-first approach with profiling mindset
+- Modular architecture supporting future expansion
+- Clean separation between game logic and rendering
+
+## 🎯 Development Principles
+
+### Quality Standards
+- **Zero Raw Pointers**: Smart pointers only in game code
+- **Exception Safety**: Comprehensive error handling
+- **Performance Minded**: 60 FPS target with optimization mindset
+- **Test Driven**: Comprehensive testing framework
+
+### Architecture Goals
+- **ECS Pattern**: Entity-Component-System for game objects
+- **Modular Design**: Clean separation of systems
+- **Cross-Platform**: Abstract platform-specific code
+- **Extensible**: Easy addition of new features and content

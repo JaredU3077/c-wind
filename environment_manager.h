@@ -2,8 +2,8 @@
 #ifndef ENVIRONMENT_MANAGER_H
 #define ENVIRONMENT_MANAGER_H
 
-#include "environmental_object.h"
 #include "collision_system.h"
+#include "environmental_object.h"
 #include <vector>
 #include <memory>
 

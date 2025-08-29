@@ -14,7 +14,7 @@ struct NPC {
     float interactionRadius;
 };
 
-extern const int MAX_NPCS;
+const int MAX_NPCS = 2;
 extern NPC npcs[MAX_NPCS];
 
 void initNPCs();

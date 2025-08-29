@@ -1,0 +1,318 @@
+---
+globs: *.cpp,*.hpp,*.h
+description: C++ coding standards for Browserwind - modern idioms, memory management, and style guidelines
+---
+
+# Browserwind C++ Coding Standards
+
+## 🎯 Modern C++ Features (C++11/14/17)
+
+### Smart Pointer Usage
+```cpp
+// ✅ GOOD: Smart pointers for object ownership
+std::unique_ptr<NPC> playerNPC = std::make_unique<TavernKeeper>();
+std::shared_ptr<EnvironmentalObject> sharedBuilding = std::make_shared<Building>();
+
+// ❌ BAD: Raw pointers
+NPC* playerNPC = new TavernKeeper();
+delete playerNPC;
+```
+
+### Range-Based Loops
+```cpp
+// ✅ GOOD: Range-based for loops
+for (auto& entity : activeEntities) {
+    entity->update(deltaTime);
+}
+
+// ✅ GOOD: With auto type deduction
+for (const auto& component : transformComponents) {
+    processTransform(component);
+}
+```
+
+### Auto Type Deduction
+```cpp
+// ✅ GOOD: Auto for complex types
+auto result = calculatePosition();
+auto iterator = container.find(key);
+
+// ✅ GOOD: Auto in range-based loops
+for (auto& [key, value] : map) { /* ... */ }
+```
+
+### Lambda Functions
+```cpp
+// ✅ GOOD: Lambda for callbacks
+auto onCollision = [](const CollisionEvent& event) {
+    handleCollision(event);
+};
+
+// ✅ GOOD: Lambda with captures
+auto updateEntities = [deltaTime](Entity& entity) {
+    entity.update(deltaTime);
+};
+```
+
+### Constexpr Usage
+```cpp
+// ✅ GOOD: Compile-time constants
+constexpr float GRAVITY_FORCE = -9.81f;
+constexpr int MAX_SWINGS = 3;
+constexpr Vector3 WORLD_UP = {0.0f, 1.0f, 0.0f};
+```
+
+## 💾 Memory Management
+
+### RAII Pattern
+```cpp
+// ✅ GOOD: RAII resource management
+class ResourceManager {
+public:
+    ResourceManager() {
+        // Acquire resources
+        initGraphics();
+        loadAssets();
+    }
+
+    ~ResourceManager() {
+        // Release resources automatically
+        cleanupGraphics();
+        unloadAssets();
+    }
+
+private:
+    // Resources managed automatically
+    std::vector<std::unique_ptr<Texture>> textures_;
+    std::unique_ptr<AudioSystem> audio_;
+};
+```
+
+### Container Usage
+```cpp
+// ✅ GOOD: Standard library containers
+std::vector<std::unique_ptr<Entity>> entities;
+std::unordered_map<std::string, std::shared_ptr<Texture>> textureCache;
+std::array<Vector3, 8> cardinalDirections;
+
+// ❌ BAD: Raw arrays
+Entity* entities = new Entity[100];
+delete[] entities;
+```
+
+### Never Use Raw Memory Management
+```cpp
+// ❌ ABSOLUTELY FORBIDDEN in Browserwind
+Player* player = new Player();
+delete player;
+
+// ❌ FORBIDDEN: Manual arrays
+int* scores = new int[10];
+delete[] scores;
+```
+
+## 🛡️ Exception Safety
+
+### Exception Handling
+```cpp
+// ✅ GOOD: Exception-safe functions
+void GameEngine::initialize() {
+    try {
+        initGraphics();
+        initPhysics();
+        loadAssets();
+    } catch (const GraphicsException& e) {
+        LOG_ERROR("Graphics initialization failed: {}", e.what());
+        shutdown();
+        throw;
+    } catch (const AssetLoadException& e) {
+        LOG_ERROR("Asset loading failed: {}", e.what());
+        throw;
+    }
+}
+```
+
+### Noexcept Specifications
+```cpp
+// ✅ GOOD: Noexcept for non-throwing functions
+Vector3 normalize(const Vector3& v) noexcept {
+    float length = std::sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+    if (length > 0.0f) {
+        return {v.x/length, v.y/length, v.z/length};
+    }
+    return {0.0f, 0.0f, 0.0f};
+}
+```
+
+## 🎨 Code Style & Formatting
+
+### Bracing Style - Allman (BSD Style)
+```cpp
+// ✅ GOOD: Allman bracing
+if (condition)
+{
+    // Code here
+}
+else if (anotherCondition)
+{
+    // Alternative code
+}
+else
+{
+    // Final alternative
+}
+
+// ❌ BAD: K&R bracing
+if (condition) {
+    // Code here
+} else {
+    // Alternative code
+}
+```
+
+### Indentation - 4 Spaces
+```cpp
+// ✅ GOOD: 4 spaces per level
+void GameEngine::update(float deltaTime)
+{
+    if (isPaused)
+    {
+        return;
+    }
+
+    for (auto& system : systems_)
+    {
+        system->update(deltaTime);
+    }
+}
+```
+
+### Naming Conventions
+```cpp
+// ✅ GOOD: Consistent naming
+class PlayerController      // PascalCase for classes
+{
+public:
+    void updatePlayer()     // camelCase for functions
+    {
+        Vector3 playerPosition;  // camelCase for variables
+        const float MAX_HEALTH = 100.0f;  // UPPER_SNAKE_CASE for constants
+    }
+
+private:
+    float _currentHealth;   // Underscore prefix for private members
+    Vector3 _playerVelocity;
+};
+```
+
+## 🔧 Language Features
+
+### Range-Based Loops with References
+```cpp
+// ✅ GOOD: Reference to avoid copying
+for (auto& entity : entities) {
+    entity.update(deltaTime);
+}
+
+// ✅ GOOD: Const reference for read-only access
+for (const auto& component : components) {
+    processComponent(component);
+}
+```
+
+### Structured Bindings (C++17)
+```cpp
+// ✅ GOOD: Structured bindings
+auto [position, velocity] = getEntityTransform(entity);
+
+// ✅ GOOD: With maps
+for (auto& [id, entity] : entityMap) {
+    entity->update(deltaTime);
+}
+```
+
+### Template Metaprogramming
+```cpp
+// ✅ GOOD: Template for type safety
+template<typename ComponentType>
+ComponentType* Entity::getComponent()
+{
+    for (auto& component : components_)
+    {
+        if (auto* casted = dynamic_cast<ComponentType*>(component.get()))
+        {
+            return casted;
+        }
+    }
+    return nullptr;
+}
+
+// Usage
+auto* transform = entity->getComponent<TransformComponent>();
+```
+
+## 🚫 Forbidden Patterns
+
+### Raw Pointers in Game Code
+```cpp
+// ❌ FORBIDDEN: Raw pointers for ownership
+Player* player = new Player();
+
+// ❌ FORBIDDEN: Manual memory management
+delete player;
+```
+
+### C-Style Arrays
+```cpp
+// ❌ FORBIDDEN: C-style arrays
+int scores[100];
+char buffer[256];
+```
+
+### Exception-Unsafe Code
+```cpp
+// ❌ FORBIDDEN: Exception-unsafe patterns
+void unsafeFunction() {
+    Resource* res = new Resource();
+    processResource(res);  // May throw
+    delete res;           // Never reached if exception thrown
+}
+```
+
+## 📝 Code Comments
+
+### Function Documentation
+```cpp
+/**
+ * Updates the game world state
+ * @param deltaTime Time elapsed since last update in seconds
+ * @param currentTime Current game time for synchronization
+ */
+void GameEngine::updateWorld(float deltaTime, double currentTime)
+{
+    // Update physics simulation
+    physicsSystem_->update(deltaTime);
+
+    // Update AI behaviors
+    aiSystem_->update(deltaTime, currentTime);
+
+    // Process collisions
+    collisionSystem_->resolveCollisions();
+}
+```
+
+### Class Documentation
+```cpp
+/**
+ * Manages the core game loop and system coordination
+ *
+ * Responsibilities:
+ * - Initialize and shutdown game systems
+ * - Coordinate update/render cycles
+ * - Handle system communication
+ * - Manage game state transitions
+ */
+class GameEngine {
+    // Implementation details...
+};
+```

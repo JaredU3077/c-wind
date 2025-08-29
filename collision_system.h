@@ -37,7 +37,7 @@ private:
     static bool pointInBox(Vector3 point, const CollisionBounds& box);
     static bool pointInSphere(Vector3 point, const CollisionBounds& sphere);
     static bool pointInCylinder(Vector3 point, const CollisionBounds& cylinder);
-    static bool pointInCapsule(Vector3 point, the CollisionBounds& capsule);
+    static bool pointInCapsule(Vector3 point, const CollisionBounds& capsule);
 };
 
 #endif

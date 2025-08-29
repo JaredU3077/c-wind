@@ -1,0 +1,542 @@
+---
+globs: *.cpp,*.hpp,*.h
+description: Game development best practices for Browserwind - ECS patterns, game loops, and performance optimization
+---
+
+# Browserwind Game Development Best Practices
+
+## 🏗️ Entity-Component-System (ECS) Pattern
+
+### Core ECS Structure
+```cpp
+// ✅ GOOD: ECS Component definitions
+struct TransformComponent {
+    Vector3 position;
+    Quaternion rotation;
+    Vector3 scale;
+};
+
+struct RenderComponent {
+    Model model;
+    Material material;
+    bool visible;
+};
+
+struct PhysicsComponent {
+    CollisionShape shape;
+    float mass;
+    Vector3 velocity;
+    bool isStatic;
+};
+
+struct InteractableComponent {
+    std::string name;
+    float interactionRadius;
+    std::function<void()> onInteract;
+};
+
+// ✅ GOOD: Entity creation with ECS
+Entity createPlayer() {
+    Entity player = entityManager.createEntity();
+
+    player.addComponent<TransformComponent>(
+        Vector3{0.0f, 1.75f, 0.0f},  // position
+        Quaternion::identity(),      // rotation
+        Vector3{1.0f, 1.0f, 1.0f}    // scale
+    );
+
+    player.addComponent<RenderComponent>(
+        loadPlayerModel(),
+        createPlayerMaterial(),
+        true
+    );
+
+    player.addComponent<PhysicsComponent>(
+        CollisionShape::CAPSULE,
+        75.0f,                      // mass
+        Vector3{0.0f, 0.0f, 0.0f},  // velocity
+        false                       // not static
+    );
+
+    return player;
+}
+```
+
+### System Implementation
+```cpp
+// ✅ GOOD: ECS System pattern
+class PhysicsSystem {
+public:
+    void update(float deltaTime) {
+        // Process all entities with physics components
+        for (auto& entity : entityManager.view<TransformComponent, PhysicsComponent>()) {
+            auto& transform = entity.get<TransformComponent>();
+            auto& physics = entity.get<PhysicsComponent>();
+
+            // Apply gravity
+            if (!physics.isStatic) {
+                physics.velocity.y += GRAVITY * deltaTime;
+            }
+
+            // Update position
+            transform.position.x += physics.velocity.x * deltaTime;
+            transform.position.y += physics.velocity.y * deltaTime;
+            transform.position.z += physics.velocity.z * deltaTime;
+        }
+    }
+};
+```
+
+### Avoid Deep Inheritance
+```cpp
+// ❌ BAD: Deep inheritance hierarchies
+class GameObject {
+    // Base properties
+};
+
+class Actor : public GameObject {
+    // Actor properties
+};
+
+class NPC : public Actor {
+    // NPC properties
+};
+
+class ShopKeeper : public NPC {
+    // ShopKeeper properties
+};
+
+// ✅ GOOD: Composition with ECS
+struct ShopKeeperTag {};
+
+Entity createShopKeeper() {
+    Entity shopKeeper = entityManager.createEntity();
+
+    // Add all necessary components
+    shopKeeper.addComponent<TransformComponent>(/* ... */);
+    shopKeeper.addComponent<RenderComponent>(/* ... */);
+    shopKeeper.addComponent<AIComponent>(/* ... */);
+    shopKeeper.addComponent<InteractableComponent>(/* ... */);
+    shopKeeper.addComponent<ShopKeeperTag>();
+
+    return shopKeeper;
+}
+```
+
+## 🎮 Game Loop Architecture
+
+### Fixed Timestep Pattern
+```cpp
+// ✅ GOOD: Fixed timestep for consistent physics
+class GameEngine {
+public:
+    void run() {
+        const double FIXED_TIMESTEP = 1.0 / 60.0;  // 60 FPS
+        double accumulator = 0.0;
+        double currentTime = getCurrentTime();
+
+        while (!shouldExit()) {
+            double newTime = getCurrentTime();
+            double frameTime = newTime - currentTime;
+            currentTime = newTime;
+
+            // Prevent spiral of death
+            frameTime = std::min(frameTime, 0.25);
+
+            accumulator += frameTime;
+
+            // Update with fixed timestep
+            while (accumulator >= FIXED_TIMESTEP) {
+                update(FIXED_TIMESTEP);
+                accumulator -= FIXED_TIMESTEP;
+            }
+
+            // Render with interpolation
+            double alpha = accumulator / FIXED_TIMESTEP;
+            render(alpha);
+        }
+    }
+
+private:
+    void update(double deltaTime) {
+        physicsSystem_->update(deltaTime);
+        aiSystem_->update(deltaTime);
+        inputSystem_->update(deltaTime);
+    }
+
+    void render(double interpolation) {
+        renderSystem_->render(interpolation);
+    }
+};
+```
+
+### Separate Update/Render Loops
+```cpp
+// ✅ GOOD: Clear separation of concerns
+void GameEngine::updateLoop(double deltaTime) {
+    // 1. Process input
+    inputSystem_->processInput();
+
+    // 2. Update game logic
+    updateGameLogic(deltaTime);
+
+    // 3. Update physics
+    physicsSystem_->simulate(deltaTime);
+
+    // 4. Update AI
+    aiSystem_->update(deltaTime);
+}
+
+void GameEngine::renderLoop(double interpolation) {
+    // 1. Clear buffers
+    renderSystem_->clear();
+
+    // 2. Render world
+    renderSystem_->renderWorld(interpolation);
+
+    // 3. Render UI
+    renderSystem_->renderUI();
+
+    // 4. Present frame
+    renderSystem_->present();
+}
+```
+
+## ⚡ Performance Optimization
+
+### Object Pooling
+```cpp
+// ✅ GOOD: Object pool for frequent allocations
+template<typename T>
+class ObjectPool {
+public:
+    ObjectPool(size_t initialSize = 100) {
+        pool_.reserve(initialSize);
+        for (size_t i = 0; i < initialSize; ++i) {
+            pool_.push_back(std::make_unique<T>());
+        }
+    }
+
+    std::unique_ptr<T> acquire() {
+        if (pool_.empty()) {
+            return std::make_unique<T>();
+        }
+        auto obj = std::move(pool_.back());
+        pool_.pop_back();
+        return obj;
+    }
+
+    void release(std::unique_ptr<T> obj) {
+        obj->reset();
+        pool_.push_back(std::move(obj));
+    }
+
+private:
+    std::vector<std::unique_ptr<T>> pool_;
+};
+
+// Usage for particle effects
+class ParticleSystem {
+private:
+    ObjectPool<Particle> particlePool_{1000};
+};
+```
+
+### Level-of-Detail (LOD) System
+```cpp
+// ✅ GOOD: LOD for performance
+class LODSystem {
+public:
+    void updateLOD(const Camera& camera) {
+        for (auto& entity : entityManager.view<TransformComponent, RenderComponent>()) {
+            auto& transform = entity.get<TransformComponent>();
+            auto& render = entity.get<RenderComponent>();
+
+            float distance = Vector3::distance(transform.position, camera.position);
+
+            if (distance < 10.0f) {
+                render.detailLevel = DetailLevel::HIGH;
+            } else if (distance < 50.0f) {
+                render.detailLevel = DetailLevel::MEDIUM;
+            } else {
+                render.detailLevel = DetailLevel::LOW;
+            }
+        }
+    }
+};
+```
+
+### Batch Rendering
+```cpp
+// ✅ GOOD: Batching for reduced draw calls
+class RenderSystem {
+public:
+    void renderScene() {
+        // Group by material
+        std::map<Material*, std::vector<RenderComponent*>> materialGroups;
+
+        for (auto& entity : entityManager.view<RenderComponent>()) {
+            auto& render = entity.get<RenderComponent>();
+            materialGroups[render.material].push_back(&render);
+        }
+
+        // Render each material group
+        for (auto& [material, components] : materialGroups) {
+            material->bind();
+            for (auto* component : components) {
+                renderComponent(*component);
+            }
+        }
+    }
+};
+```
+
+### Cache Expensive Calculations
+```cpp
+// ✅ GOOD: Caching for performance
+class PathfindingSystem {
+public:
+    std::vector<Vector3> findPath(const Vector3& start, const Vector3& end) {
+        PathKey key{start, end};
+
+        // Check cache first
+        auto it = pathCache_.find(key);
+        if (it != pathCache_.end()) {
+            return it->second;
+        }
+
+        // Calculate path
+        auto path = calculateAStarPath(start, end);
+
+        // Cache result
+        pathCache_[key] = path;
+
+        return path;
+    }
+
+private:
+    struct PathKey {
+        Vector3 start, end;
+
+        bool operator==(const PathKey& other) const {
+            return start == other.start && end == other.end;
+        }
+    };
+
+    struct PathKeyHash {
+        size_t operator()(const PathKey& key) const {
+            // Hash implementation
+        }
+    };
+
+    std::unordered_map<PathKey, std::vector<Vector3>, PathKeyHash> pathCache_;
+};
+```
+
+## 🎯 Coordinate System Standards
+
+### Right-Handed Coordinate System
+```cpp
+// ✅ GOOD: Consistent coordinate system
+const Vector3 WORLD_UP = {0.0f, 1.0f, 0.0f};      // Y-axis up
+const Vector3 WORLD_FORWARD = {0.0f, 0.0f, 1.0f}; // Z-axis forward
+const Vector3 WORLD_RIGHT = {1.0f, 0.0f, 0.0f};   // X-axis right
+
+// First-person camera setup
+Camera3D camera = {
+    .position = playerPosition + Vector3{0.0f, 1.75f, 0.0f},  // Eye height
+    .target = playerPosition + Vector3{0.0f, 1.75f, 1.0f},   // Look forward
+    .up = WORLD_UP,
+    .fovy = 60.0f,
+    .projection = CAMERA_PERSPECTIVE
+};
+```
+
+### World Units
+```cpp
+// ✅ GOOD: Consistent unit system
+constexpr float METER = 1.0f;           // 1 unit = 1 meter
+constexpr float PLAYER_HEIGHT = 1.75f;  // Average human height
+constexpr float PLAYER_RADIUS = 0.4f;   // Player collision radius
+constexpr float GRAVITY = -9.81f;       // Realistic gravity (m/s²)
+```
+
+## 🎨 Material System
+
+### Consistent Material Naming
+```cpp
+// ✅ GOOD: Fantasy-themed material names
+const std::string STONE_WALL = "AncientStoneWall";
+const std::string WOOD_FLOOR = "OakPlankFloor";
+const std::string METAL_SWORD = "ForgedSteelSword";
+const std::string MAGIC_CRYSTAL = "EldritchCrystal";
+const std::string LEATHER_ARMOR = "TannedLeatherArmor";
+const std::string CLOTH_ROBE = "SilkMageRobe";
+```
+
+### Texture Coordinate Standards
+```cpp
+// ✅ GOOD: Consistent UV mapping
+const Vector2 UV_BOTTOM_LEFT = {0.0f, 0.0f};
+const Vector2 UV_TOP_RIGHT = {1.0f, 1.0f};
+const Vector2 UV_CENTER = {0.5f, 0.5f};
+
+// Wall texture mapping (standard for Browserwind)
+void setupWallUVs(Mesh& wallMesh) {
+    wallMesh.uvs = {
+        UV_BOTTOM_LEFT,    // Bottom-left
+        {1.0f, 0.0f},     // Bottom-right
+        {1.0f, 1.0f},     // Top-right
+        UV_TOP_RIGHT      // Top-left
+    };
+}
+```
+
+## 🎯 Collision Detection Standards
+
+### Collision Shape Guidelines
+```cpp
+// ✅ GOOD: Appropriate collision shapes
+enum class CollisionShape {
+    CAPSULE,    // Characters (height + radius)
+    AABB,       // Buildings, static geometry
+    SPHERE,     // Projectiles, small objects
+    CYLINDER    // Trees, pillars, environmental
+};
+
+// Player collision setup
+PhysicsComponent playerPhysics = {
+    .shape = CollisionShape::CAPSULE,
+    .size = {PLAYER_RADIUS, PLAYER_HEIGHT, 0.0f},
+    .mass = 75.0f,
+    .isStatic = false
+};
+
+// Building collision setup
+PhysicsComponent buildingPhysics = {
+    .shape = CollisionShape::AABB,
+    .size = {buildingSize.x, buildingSize.y, buildingSize.z},
+    .mass = 0.0f,  // Infinite mass (static)
+    .isStatic = true
+};
+```
+
+## 🎮 AI & Behavior Systems
+
+### State Machine Pattern
+```cpp
+// ✅ GOOD: NPC state machine
+enum class NPCState {
+    IDLE,
+    PATROL,
+    COMBAT,
+    FLEE,
+    INTERACT
+};
+
+class NPCController {
+public:
+    void update(float deltaTime) {
+        switch (currentState_) {
+            case NPCState::IDLE:
+                updateIdle(deltaTime);
+                break;
+            case NPCState::PATROL:
+                updatePatrol(deltaTime);
+                break;
+            case NPCState::COMBAT:
+                updateCombat(deltaTime);
+                break;
+            case NPCState::FLEE:
+                updateFlee(deltaTime);
+                break;
+            case NPCState::INTERACT:
+                updateInteract(deltaTime);
+                break;
+        }
+    }
+
+private:
+    NPCState currentState_ = NPCState::IDLE;
+    std::vector<Vector3> patrolPoints_;
+};
+```
+
+### Perception System
+```cpp
+// ✅ GOOD: NPC perception
+struct PerceptionSphere {
+    float visionRange = 20.0f;
+    float visionAngle = 120.0f;  // Degrees
+    float hearingRange = 10.0f;
+    std::vector<std::string> detectableTags;
+};
+
+class PerceptionSystem {
+public:
+    std::vector<Entity> getDetectedEntities(const Entity& detector) {
+        std::vector<Entity> detected;
+
+        auto& detectorTransform = detector.get<TransformComponent>();
+        auto& detectorPerception = detector.get<PerceptionComponent>();
+
+        for (auto& entity : entityManager.view<TransformComponent, TagComponent>()) {
+            if (canDetect(detectorTransform, detectorPerception, entity)) {
+                detected.push_back(entity);
+            }
+        }
+
+        return detected;
+    }
+};
+```
+
+## 🎯 Performance Targets
+
+### Frame Rate Budget
+```cpp
+// ✅ GOOD: Performance budgeting
+class PerformanceMonitor {
+public:
+    void beginFrame() {
+        frameStart_ = getCurrentTime();
+    }
+
+    void endFrame() {
+        double frameTime = getCurrentTime() - frameStart_;
+
+        // Budget: 16.67ms for 60 FPS
+        if (frameTime > 0.01667) {
+            LOG_WARNING("Frame time budget exceeded: {}ms", frameTime * 1000.0);
+        }
+
+        // Track rolling average
+        frameTimeHistory_[frameIndex_] = frameTime;
+        frameIndex_ = (frameIndex_ + 1) % 60;  // 1 second rolling average
+    }
+
+private:
+    double frameStart_;
+    std::array<double, 60> frameTimeHistory_;
+    size_t frameIndex_ = 0;
+};
+```
+
+### Memory Budget
+```cpp
+// ✅ GOOD: Memory monitoring
+class MemoryMonitor {
+public:
+    void checkMemoryUsage() {
+        size_t currentUsage = getCurrentMemoryUsage();
+
+        // Budget: 2GB for desktop builds
+        constexpr size_t MEMORY_BUDGET = 2ULL * 1024ULL * 1024ULL * 1024ULL;
+
+        if (currentUsage > MEMORY_BUDGET) {
+            LOG_WARNING("Memory budget exceeded: {}GB used", currentUsage / (1024.0 * 1024.0 * 1024.0));
+            triggerGarbageCollection();
+        }
+    }
+};
+```

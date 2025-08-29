@@ -1,0 +1,631 @@
+---
+globs: *.cpp,*.hpp,*.h
+description: Performance optimization rules for Browserwind - profiling, optimization techniques, and performance targets
+---
+
+# Browserwind Performance Optimization Rules
+
+## 🎯 Performance Mindset
+
+### Always Profile First
+```cpp
+// ✅ GOOD: Profile before optimizing
+class PerformanceProfiler {
+public:
+    void beginSample(const std::string& name) {
+        samples_[name].startTime = getHighResolutionTime();
+    }
+
+    void endSample(const std::string& name) {
+        auto& sample = samples_[name];
+        sample.endTime = getHighResolutionTime();
+        sample.duration = sample.endTime - sample.startTime;
+        sample.callCount++;
+
+        // Log slow functions
+        if (sample.duration > 0.01667) {  // > 1 frame at 60 FPS
+            LOG_WARNING("Slow function detected: {} took {}ms",
+                       name, sample.duration * 1000.0);
+        }
+    }
+
+    void reportFrame() {
+        for (auto& [name, sample] : samples_) {
+            LOG_INFO("Performance: {} - Avg: {}ms, Calls: {}",
+                    name,
+                    (sample.totalDuration / sample.callCount) * 1000.0,
+                    sample.callCount);
+        }
+        samples_.clear();
+    }
+
+private:
+    struct Sample {
+        double startTime = 0.0;
+        double endTime = 0.0;
+        double duration = 0.0;
+        double totalDuration = 0.0;
+        int callCount = 0;
+    };
+    std::unordered_map<std::string, Sample> samples_;
+};
+
+// Usage
+#define PROFILE_SCOPE(name) \
+    PerformanceProfiler::getInstance().beginSample(name); \
+    auto profileGuard = std::unique_ptr<void, decltype([](void*){ \
+        PerformanceProfiler::getInstance().endSample(name); \
+    })>((void*)1, [](void*){ PerformanceProfiler::getInstance().endSample(name); });
+
+void GameEngine::update(float deltaTime) {
+    PROFILE_SCOPE("GameEngine::update");
+
+    {
+        PROFILE_SCOPE("Physics Update");
+        physicsSystem_->update(deltaTime);
+    }
+
+    {
+        PROFILE_SCOPE("AI Update");
+        aiSystem_->update(deltaTime);
+    }
+}
+```
+
+## 🎮 Rendering Performance
+
+### Draw Call Batching
+```cpp
+// ✅ GOOD: Minimize draw calls through batching
+class RenderBatch {
+public:
+    void beginBatch() {
+        currentBatch_.clear();
+    }
+
+    void addToBatch(const RenderCommand& command) {
+        // Group by material to minimize state changes
+        currentBatch_[command.material].push_back(command);
+    }
+
+    void flushBatch() {
+        for (auto& [material, commands] : currentBatch_) {
+            // Bind material once
+            material->bind();
+
+            // Render all objects with this material
+            for (auto& command : commands) {
+                renderSingleObject(command);
+            }
+        }
+
+        // Clear for next frame
+        currentBatch_.clear();
+    }
+
+private:
+    std::unordered_map<Material*, std::vector<RenderCommand>> currentBatch_;
+};
+```
+
+### Level-of-Detail (LOD) System
+```cpp
+// ✅ GOOD: LOD for distant objects
+enum class DetailLevel {
+    HIGH,    // Full detail, all features
+    MEDIUM,  // Reduced polygons, simplified textures
+    LOW,     // Minimal geometry, low-res textures
+    CULLED   // Don't render at all
+};
+
+class LODManager {
+public:
+    DetailLevel calculateLOD(const Vector3& objectPos, const Camera& camera) {
+        float distance = Vector3::distance(objectPos, camera.position);
+
+        if (distance < 10.0f) return DetailLevel::HIGH;
+        if (distance < 50.0f) return DetailLevel::MEDIUM;
+        if (distance < 100.0f) return DetailLevel::LOW;
+        return DetailLevel::CULLED;
+    }
+
+    void applyLOD(Entity& entity, DetailLevel lod) {
+        auto& render = entity.get<RenderComponent>();
+
+        switch (lod) {
+            case DetailLevel::HIGH:
+                render.model = highDetailModel_;
+                render.material = highDetailMaterial_;
+                break;
+            case DetailLevel::MEDIUM:
+                render.model = mediumDetailModel_;
+                render.material = mediumDetailMaterial_;
+                break;
+            case DetailLevel::LOW:
+                render.model = lowDetailModel_;
+                render.material = lowDetailMaterial_;
+                break;
+            case DetailLevel::CULLED:
+                render.visible = false;
+                break;
+        }
+    }
+};
+```
+
+### Frustum Culling
+```cpp
+// ✅ GOOD: Don't render objects outside camera view
+class FrustumCuller {
+public:
+    void updateFrustum(const Camera& camera) {
+        // Calculate camera frustum planes
+        calculateFrustumPlanes(camera);
+    }
+
+    bool isVisible(const AABB& bounds) const {
+        // Test AABB against all 6 frustum planes
+        for (const auto& plane : frustumPlanes_) {
+            if (isCompletelyOutside(bounds, plane)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+private:
+    std::array<Plane, 6> frustumPlanes_;
+
+    void calculateFrustumPlanes(const Camera& camera) {
+        // Implementation of frustum plane calculation
+        // Based on camera projection matrix
+    }
+
+    bool isCompletelyOutside(const AABB& bounds, const Plane& plane) const {
+        // Test if AABB is completely outside plane
+        Vector3 closestPoint = {
+            plane.normal.x > 0 ? bounds.max.x : bounds.min.x,
+            plane.normal.y > 0 ? bounds.max.y : bounds.min.y,
+            plane.normal.z > 0 ? bounds.max.z : bounds.min.z
+        };
+
+        return Vector3::dot(closestPoint, plane.normal) + plane.distance < 0;
+    }
+};
+```
+
+### Occlusion Culling
+```cpp
+// ✅ GOOD: Don't render hidden objects
+class OcclusionCuller {
+public:
+    void buildOcclusionMap(const Camera& camera) {
+        // Render scene from camera perspective
+        // Identify which objects are visible
+        visibleObjects_.clear();
+
+        for (auto& entity : entityManager.view<RenderComponent, TransformComponent>()) {
+            if (isPotentiallyVisible(entity, camera)) {
+                visibleObjects_.push_back(entity);
+            }
+        }
+    }
+
+    bool shouldRender(const Entity& entity) const {
+        return std::find(visibleObjects_.begin(), visibleObjects_.end(), entity)
+               != visibleObjects_.end();
+    }
+
+private:
+    std::vector<Entity> visibleObjects_;
+
+    bool isPotentiallyVisible(const Entity& entity, const Camera& camera) {
+        // Quick visibility tests:
+        // 1. Distance culling
+        // 2. Frustum culling
+        // 3. Occlusion queries
+        return true; // Simplified
+    }
+};
+```
+
+## 💾 Memory Optimization
+
+### Object Pool Pattern
+```cpp
+// ✅ GOOD: Reuse objects to avoid allocations
+template<typename T>
+class ObjectPool {
+public:
+    ObjectPool(size_t initialSize = 100) {
+        pool_.reserve(initialSize);
+        for (size_t i = 0; i < initialSize; ++i) {
+            pool_.push_back(std::make_unique<T>());
+        }
+    }
+
+    std::unique_ptr<T> acquire() {
+        if (pool_.empty()) {
+            // Pool exhausted, allocate new object
+            return std::make_unique<T>();
+        }
+
+        auto obj = std::move(pool_.back());
+        pool_.pop_back();
+        return obj;
+    }
+
+    void release(std::unique_ptr<T> obj) {
+        // Reset object to clean state
+        obj->reset();
+
+        // Return to pool
+        pool_.push_back(std::move(obj));
+    }
+
+private:
+    std::vector<std::unique_ptr<T>> pool_;
+};
+
+// Usage for particle effects
+class ParticleManager {
+public:
+    void spawnParticle(const Vector3& position) {
+        auto particle = particlePool_.acquire();
+        particle->position = position;
+        particle->lifetime = 2.0f;
+        activeParticles_.push_back(std::move(particle));
+    }
+
+    void update(float deltaTime) {
+        // Update active particles
+        for (auto it = activeParticles_.begin(); it != activeParticles_.end(); ) {
+            (*it)->update(deltaTime);
+
+            if ((*it)->lifetime <= 0.0f) {
+                // Return to pool
+                particlePool_.release(std::move(*it));
+                it = activeParticles_.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+
+private:
+    ObjectPool<Particle> particlePool_{1000};
+    std::vector<std::unique_ptr<Particle>> activeParticles_;
+};
+```
+
+### Memory Pool Allocator
+```cpp
+// ✅ GOOD: Custom allocator for frequent allocations
+class MemoryPool {
+public:
+    MemoryPool(size_t blockSize, size_t blockCount)
+        : blockSize_(blockSize), blockCount_(blockCount) {
+
+        pool_ = new char[blockSize_ * blockCount_];
+        freeList_ = new void*[blockCount_];
+
+        // Initialize free list
+        for (size_t i = 0; i < blockCount_; ++i) {
+            freeList_[i] = pool_ + (i * blockSize_);
+        }
+        freeCount_ = blockCount_;
+    }
+
+    ~MemoryPool() {
+        delete[] pool_;
+        delete[] freeList_;
+    }
+
+    void* allocate() {
+        if (freeCount_ == 0) {
+            // Pool exhausted, fallback to heap
+            return new char[blockSize_];
+        }
+
+        void* block = freeList_[--freeCount_];
+        return block;
+    }
+
+    void deallocate(void* block) {
+        if (isFromPool(block)) {
+            freeList_[freeCount_++] = block;
+        } else {
+            // From heap, use standard delete
+            delete[] static_cast<char*>(block);
+        }
+    }
+
+private:
+    size_t blockSize_;
+    size_t blockCount_;
+    char* pool_;
+    void** freeList_;
+    size_t freeCount_;
+
+    bool isFromPool(void* block) const {
+        return block >= pool_ && block < pool_ + (blockSize_ * blockCount_);
+    }
+};
+```
+
+## 🚀 Algorithm Optimization
+
+### Spatial Partitioning
+```cpp
+// ✅ GOOD: Octree for spatial queries
+class Octree {
+public:
+    Octree(const AABB& bounds, int maxDepth = 8)
+        : bounds_(bounds), maxDepth_(maxDepth) {}
+
+    void insert(Entity entity) {
+        insertRecursive(entity, bounds_, 0);
+    }
+
+    std::vector<Entity> query(const AABB& queryBounds) const {
+        std::vector<Entity> results;
+        queryRecursive(queryBounds, bounds_, results);
+        return results;
+    }
+
+private:
+    struct Node {
+        AABB bounds;
+        std::vector<Entity> entities;
+        std::unique_ptr<Node> children[8];  // Octree children
+
+        bool isLeaf() const {
+            return children[0] == nullptr;
+        }
+    };
+
+    AABB bounds_;
+    int maxDepth_;
+    std::unique_ptr<Node> root_;
+
+    void insertRecursive(Entity entity, const AABB& nodeBounds, int depth) {
+        // Implementation details...
+    }
+
+    void queryRecursive(const AABB& queryBounds, const Node* node,
+                        std::vector<Entity>& results) const {
+        // Implementation details...
+    }
+};
+
+// Usage for collision detection
+class CollisionSystem {
+public:
+    void update() {
+        // Broad phase: spatial partitioning
+        for (auto& entity : entityManager.view<TransformComponent, PhysicsComponent>()) {
+            spatialIndex_.insert(entity);
+        }
+
+        // Narrow phase: detailed collision detection
+        for (auto& entityA : activeEntities_) {
+            AABB boundsA = calculateBounds(entityA);
+            auto nearbyEntities = spatialIndex_.query(boundsA);
+
+            for (auto& entityB : nearbyEntities) {
+                if (entityA != entityB) {
+                    checkCollision(entityA, entityB);
+                }
+            }
+        }
+    }
+
+private:
+    Octree spatialIndex_{worldBounds_};
+};
+```
+
+### Cache-Friendly Data Structures
+```cpp
+// ✅ GOOD: Cache-friendly ECS storage
+class ComponentStorage {
+public:
+    template<typename ComponentType>
+    class Storage {
+    public:
+        ComponentType& get(EntityId entity) {
+            return components_[entityToIndex_[entity]];
+        }
+
+        void add(EntityId entity, ComponentType component) {
+            size_t index = components_.size();
+            components_.push_back(std::move(component));
+            entityToIndex_[entity] = index;
+        }
+
+        void remove(EntityId entity) {
+            // Swap with last element for O(1) removal
+            size_t index = entityToIndex_[entity];
+            size_t lastIndex = components_.size() - 1;
+
+            if (index != lastIndex) {
+                std::swap(components_[index], components_[lastIndex]);
+                // Update swapped entity's index
+                EntityId swappedEntity = indexToEntity_[lastIndex];
+                entityToIndex_[swappedEntity] = index;
+            }
+
+            components_.pop_back();
+            entityToIndex_.erase(entity);
+        }
+
+    private:
+        std::vector<ComponentType> components_;  // Contiguous storage
+        std::unordered_map<EntityId, size_t> entityToIndex_;
+        std::unordered_map<size_t, EntityId> indexToEntity_;
+    };
+};
+```
+
+## 📊 Performance Budgeting
+
+### Frame Time Budget
+```cpp
+// ✅ GOOD: Strict performance budgeting
+class PerformanceBudget {
+public:
+    PerformanceBudget(double targetFrameTime = 0.01667)  // 60 FPS
+        : targetFrameTime_(targetFrameTime) {}
+
+    void beginFrame() {
+        frameStart_ = getHighResolutionTime();
+        currentBudget_ = targetFrameTime_;
+    }
+
+    bool allocateTime(double requestedTime, const std::string& systemName) {
+        if (requestedTime > currentBudget_) {
+            LOG_WARNING("Performance budget exceeded for {}: requested {}ms, remaining {}ms",
+                       systemName, requestedTime * 1000.0, currentBudget_ * 1000.0);
+            return false;
+        }
+
+        currentBudget_ -= requestedTime;
+        return true;
+    }
+
+    void endFrame() {
+        double actualFrameTime = getHighResolutionTime() - frameStart_;
+
+        if (actualFrameTime > targetFrameTime_) {
+            LOG_WARNING("Frame time budget exceeded: {}ms (target: {}ms)",
+                       actualFrameTime * 1000.0, targetFrameTime_ * 1000.0);
+        }
+
+        // Adjust budgets for next frame based on performance
+        adjustBudgets(actualFrameTime);
+    }
+
+private:
+    double targetFrameTime_;
+    double currentBudget_;
+    double frameStart_;
+
+    std::unordered_map<std::string, double> systemBudgets_;
+};
+```
+
+### GPU Performance Monitoring
+```cpp
+// ✅ GOOD: GPU performance tracking
+class GPUProfiler {
+public:
+    void beginSample(const std::string& name) {
+        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, name.c_str());
+        glBeginQuery(GL_TIME_ELAPSED, queries_[currentQuery_]);
+    }
+
+    void endSample() {
+        glEndQuery(GL_TIME_ELAPSED);
+        glPopDebugGroup();
+
+        // Store result for later retrieval
+        pendingQueries_.push_back(currentQuery_);
+        currentQuery_ = (currentQuery_ + 1) % MAX_QUERIES;
+    }
+
+    void collectResults() {
+        for (GLuint query : pendingQueries_) {
+            GLuint64 timeElapsed;
+            glGetQueryObjectui64v(query, GL_QUERY_RESULT, &timeElapsed);
+
+            double timeMs = timeElapsed / 1000000.0;  // Nanoseconds to milliseconds
+            LOG_INFO("GPU Time: {}ms", timeMs);
+        }
+        pendingQueries_.clear();
+    }
+
+private:
+    static constexpr int MAX_QUERIES = 64;
+    GLuint queries_[MAX_QUERIES];
+    std::vector<GLuint> pendingQueries_;
+    int currentQuery_ = 0;
+};
+```
+
+## 🎯 Optimization Checklist
+
+### Pre-Optimization
+- [ ] Profile the code to identify bottlenecks
+- [ ] Establish performance baselines
+- [ ] Set clear performance targets
+- [ ] Document current performance characteristics
+
+### Algorithm Optimization
+- [ ] Use appropriate data structures (vector vs map)
+- [ ] Implement spatial partitioning for collision detection
+- [ ] Cache expensive calculations
+- [ ] Minimize dynamic allocations
+
+### Rendering Optimization
+- [ ] Implement frustum culling
+- [ ] Add level-of-detail (LOD) system
+- [ ] Batch draw calls by material
+- [ ] Use instancing for identical objects
+
+### Memory Optimization
+- [ ] Implement object pooling
+- [ ] Use memory pools for frequent allocations
+- [ ] Optimize data structure layouts
+- [ ] Minimize cache misses
+
+### System Optimization
+- [ ] Use fixed timestep for physics
+- [ ] Separate update and render loops
+- [ ] Implement performance budgeting
+- [ ] Add automated performance monitoring
+
+## 🚨 Performance Anti-Patterns
+
+### ❌ Bad: Premature Optimization
+```cpp
+// Don't do this without profiling first
+void prematureOptimization() {
+    // Complex optimization that may not be needed
+    // Makes code harder to understand and maintain
+}
+```
+
+### ❌ Bad: Micro-Optimizations Without Context
+```cpp
+// Don't waste time on insignificant optimizations
+int microOptimization = x * 2;  // Instead of x << 1
+// This saves nanoseconds but costs readability
+```
+
+### ❌ Bad: Ignoring Memory Layout
+```cpp
+// Bad: Cache-unfriendly data access
+struct BadLayout {
+    Vector3 position;      // Frequently accessed
+    std::string name;      // Rarely accessed
+    Vector3 velocity;      // Frequently accessed
+    std::string description; // Rarely accessed
+};
+```
+
+### ❌ Bad: Excessive Abstraction Layers
+```cpp
+// Bad: Too many abstraction layers hurt performance
+class AbstractRenderer {
+    virtual void render() = 0;
+};
+
+class ConcreteRenderer : public AbstractRenderer {
+    void render() override { /* Implementation */ }
+};
+
+class RendererWrapper : public AbstractRenderer {
+    ConcreteRenderer renderer_;
+    void render() override { renderer_.render(); }
+};
+```

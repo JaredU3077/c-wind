@@ -232,12 +232,16 @@ bool testMeleeHitDetectionSystem() {
     bool isOutOfRange = distance > meleeRange;
     TEST_ASSERT_TRUE(isOutOfRange);
 
-    // Test exact range limit
-    targetPos.x = 3.0f; // Exactly at range limit
+    // Test exact range limit (with floating point tolerance)
+    targetPos.x = 3.0f; // At X=3, but Y=3 and player Y=2, so distance is sqrt(3² + 1² + 0²) = sqrt(10) ≈ 3.162
+    targetPos.y = 2.0f; // Move target to same Y level as player
     diff.x = targetPos.x - playerPos.x;
+    diff.y = targetPos.y - playerPos.y;
     distance = sqrtf(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z);
 
-    bool isAtRange = distance == meleeRange;
+    // Use tolerance for floating point comparison
+    float tolerance = 0.001f;
+    bool isAtRange = fabs(distance - meleeRange) < tolerance;
     TEST_ASSERT_TRUE(isAtRange);
 
     return true;

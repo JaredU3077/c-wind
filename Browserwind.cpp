@@ -552,11 +552,13 @@ int main(void)
     NPC npcs[MAX_NPCS];
 
     // Game state variables
+    // Game state variables
     bool isInBuilding = false;
     int currentBuilding = -1;
     bool showInteractPrompt = false;
     std::string interactPromptText = "";
     Vector3 lastOutdoorPosition = {0.0f, 1.75f, 0.0f};
+    bool testBuildingEntry = false;
 
 
 
@@ -795,25 +797,25 @@ int main(void)
 
     // Initialize NPCs for the two buildings (GROUND LEVEL positions)
     // Mayor's Building: Center at {0.0f, 2.5f, -12.0f}, Size {10.0f, 5.0f, 8.0f}
-    // Player enters at {0.0f, 1.75f, -11.0f} (center.z + 1.0f)
+    // Player enters at {0.0f, 1.75f, -10.0f} (center.z + 2.0f)
     npcs[0] = {
-        .position = {0.0f, 0.0f, -14.0f},    // GROUND LEVEL position inside Mayor's Building
+        .position = {0.0f, 0.0f, -15.5f},   // FARTHER back in Mayor's Building (was -14.0f)
         .name = "Mayor White",
         .dialog = "Greetings, citizen! Welcome to my office. What brings you here today?",
         .color = WHITE,
         .canInteract = true,
-        .interactionRadius = 3.0f
+        .interactionRadius = 2.5f                // Reduced radius (was 3.0f)
     };
 
     // Shop Keeper's Building: Center at {12.0f, 2.5f, 0.0f}, Size {8.0f, 5.0f, 6.0f}
-    // Player enters at {12.0f, 1.75f, 1.0f} (center.z + 1.0f)
+    // Player enters at {12.0f, 1.75f, 2.0f} (center.z + 2.0f)
     npcs[1] = {
-        .position = {12.0f, 0.0f, -3.0f},    // GROUND LEVEL position inside Shop Building
+        .position = {12.0f, 0.0f, -5.0f},    // FARTHER back in Shop Building (was -3.0f)
         .name = "Buster Shoppin",
         .dialog = "Welcome to my shop! I've got all sorts of goods and supplies for sale.",
         .color = GREEN,
         .canInteract = true,
-        .interactionRadius = 3.0f
+        .interactionRadius = 2.5f                // Reduced radius (was 3.0f)
     };
 
     // ===== ENVIRONMENTAL OBJECTS =====
@@ -852,9 +854,8 @@ int main(void)
     bool testMouseLook = false;
     bool testMeleeSwing = false;
     bool testMeleeHitDetection = false;
-    bool testBuildingEntry = false;
+    // testBuildingEntry is now in GameState structure
     bool testNPCInteraction = false;
-    int testFrameCount = 0;
     Vector3 lastCameraPos = camera.position;
 
     // Main game loop with custom ESC handling
@@ -932,89 +933,95 @@ int main(void)
             testMeleeSwing = true;
         }
 
-        // Interaction system (E key) - Fixed to avoid conflicts
-        bool nearInteractable = false;
-        std::string interactableName = "";
-        static float lastEPressTime = 0.0f;
+        // ===== INTERACTION SYSTEM (E key) =====
+        // Priority system: Check NPC interactions first when inside building, then door interactions
 
-        // Only process E key if it hasn't been pressed recently (prevent spam and rotation)
+        static float lastEPressTime = 0.0f;
         bool eKeyPressed = IsKeyPressed(KEY_E) && (currentTime - lastEPressTime) > 0.3f;
 
         if (eKeyPressed) {
             lastEPressTime = currentTime;
         }
 
-        // Check for building interactions using the new environmental system
-        auto objects = environment.getAllObjects();
-        for (size_t i = 0; i < objects.size(); ++i) {
-            if (auto building = std::dynamic_pointer_cast<Building>(objects[i])) {
-                if (building->isInteractive()) {
-                    Vector3 doorPos = building->getDoorPosition();
-                    Vector3 toDoor = {
-                        doorPos.x - camera.position.x,
-                        doorPos.y - camera.position.y,
-                        doorPos.z - camera.position.z
+        // Flag to prevent multiple interactions in same frame
+        bool interactionHandled = false;
+
+        // ===== NPC INTERACTIONS (Higher Priority when inside building) =====
+        if (isInBuilding && !interactionHandled) {
+            for (int n = 0; n < MAX_NPCS; n++) {
+                bool npcVisible = false;
+
+                // Determine if NPC should be interactable based on current location
+                if (isInBuilding) {
+                    // Inside building - only interact with NPCs in current building
+                    if (currentBuilding == 0 && n == 0) npcVisible = true; // Mayor White in Mayor's Building
+                    if (currentBuilding == 1 && n == 1) npcVisible = true; // Buster Shoppin in Shop Building
+                }
+
+                if (npcVisible) {
+                    Vector3 toNPC = {
+                        npcs[n].position.x - camera.position.x,
+                        npcs[n].position.y - camera.position.y,
+                        npcs[n].position.z - camera.position.z
                     };
-                    float distance = sqrtf(toDoor.x * toDoor.x + toDoor.y * toDoor.y + toDoor.z * toDoor.z);
+                    float distance = sqrtf(toNPC.x * toNPC.x + toNPC.y * toNPC.y + toNPC.z * toNPC.z);
 
-                    if (distance <= 3.0f && !isInBuilding) {  // Increased range to 3.0
-                        nearInteractable = true;
-                        interactableName = "Press E to enter " + building->getName();
-                        if (eKeyPressed) {
-                            // Enter building - position player safely inside, away from walls and NPCs
-                            isInBuilding = true;
-                            currentBuilding = static_cast<int>(i);
-                            lastOutdoorPosition = camera.position;
-
-                            // Position player 1 unit inside from the door (safer positioning)
-                            camera.position = {building->position.x, eyeHeight, building->position.z + 1.0f};
-                            camera.target = {building->position.x, eyeHeight - 0.2f, building->position.z + 4.0f};
-                            playerY = 0.0f;
-                            testBuildingEntry = true;
-                            break; // Prevent multiple building entries
+                    // Increased interaction range for better usability
+                    if (distance <= npcs[n].interactionRadius * 1.5f) {
+                        showInteractPrompt = true;
+                        interactPromptText = "Press E to talk to " + npcs[n].name;
+                        if (eKeyPressed && !isInDialog) {
+                            // Start dialog with NPC - HIGHEST PRIORITY
+                            startDialog(n);
+                            testNPCInteraction = true;
+                            interactionHandled = true;  // Prevent door interaction
+                            break;  // Exit NPC loop once interaction is handled
                         }
-                    } else if (isInBuilding && currentBuilding == static_cast<int>(i) && eKeyPressed) {
-                        // Exit building (only current building)
-                        isInBuilding = false;
-                        camera.position = lastOutdoorPosition;
-                        camera.target = {lastOutdoorPosition.x, lastOutdoorPosition.y - 0.2f, lastOutdoorPosition.z - 5.0f};
-                        currentBuilding = -1;
-                        break; // Prevent multiple exits
                     }
                 }
             }
         }
 
-        // Check for NPC interactions
-        for (int n = 0; n < MAX_NPCS; n++) {
-            bool npcVisible = false;
+        // ===== BUILDING INTERACTIONS (Lower Priority) =====
+        if (!interactionHandled) {
+            auto objects = environment.getAllObjects();
+            for (size_t i = 0; i < objects.size(); ++i) {
+                if (auto building = std::dynamic_pointer_cast<Building>(objects[i])) {
+                    if (building->isInteractive()) {
+                        Vector3 doorPos = building->getDoorPosition();
+                        Vector3 toDoor = {
+                            doorPos.x - camera.position.x,
+                            doorPos.y - camera.position.y,
+                            doorPos.z - camera.position.z
+                        };
+                        float distance = sqrtf(toDoor.x * toDoor.x + toDoor.y * toDoor.y + toDoor.z * toDoor.z);
 
-            // Determine if NPC should be interactable based on current location
-            if (isInBuilding) {
-                // Inside building - only interact with NPCs in current building
-                if (currentBuilding == 0 && n == 0) npcVisible = true; // Mayor White in Mayor's Building
-                if (currentBuilding == 1 && n == 1) npcVisible = true; // Buster Shoppin in Shop Keeper's Building
-            } else {
-                // Outside - no NPCs to interact with
-                npcVisible = false;
-            }
+                        if (distance <= 3.0f && !isInBuilding) {
+                            showInteractPrompt = true;
+                            interactPromptText = "Press E to enter " + building->getName();
+                            if (eKeyPressed) {
+                                // Enter building - position player safely inside, away from walls and NPCs
+                                isInBuilding = true;
+                                currentBuilding = static_cast<int>(i);
+                                lastOutdoorPosition = camera.position;
 
-            if (npcVisible) {
-                Vector3 toNPC = {
-                    npcs[n].position.x - camera.position.x,
-                    npcs[n].position.y - camera.position.y,
-                    npcs[n].position.z - camera.position.z
-                };
-                float distance = sqrtf(toNPC.x * toNPC.x + toNPC.y * toNPC.y + toNPC.z * toNPC.z);
-
-                // Increased interaction range for better usability
-                if (distance <= npcs[n].interactionRadius * 1.5f) {
-                    nearInteractable = true;
-                    interactableName = "Press E to talk to " + npcs[n].name;
-                    if (eKeyPressed && !isInDialog) {
-                        // Start dialog with NPC
-                        startDialog(n);
-                        testNPCInteraction = true;
+                                // Position player 1 unit inside from the door (safer positioning)
+                                camera.position = {building->position.x, eyeHeight, building->position.z + 1.0f};
+                                camera.target = {building->position.x, eyeHeight - 0.2f, building->position.z + 4.0f};
+                                playerY = 0.0f;
+                                testBuildingEntry = true;
+                                interactionHandled = true;
+                                break; // Prevent multiple building entries
+                            }
+                        } else if (isInBuilding && currentBuilding == static_cast<int>(i) && eKeyPressed) {
+                            // Exit building (only current building) - LOWEST PRIORITY
+                            isInBuilding = false;
+                            camera.position = lastOutdoorPosition;
+                            camera.target = {lastOutdoorPosition.x, lastOutdoorPosition.y - 0.2f, lastOutdoorPosition.z - 5.0f};
+                            currentBuilding = -1;
+                            interactionHandled = true;
+                            break; // Prevent multiple exits
+                        }
                     }
                 }
             }
@@ -1052,13 +1059,11 @@ int main(void)
             }
         }
 
-        // Improved interaction prompt system with better timing and feedback
+        // ===== INTERACTION PROMPT SYSTEM =====
         static float lastInteractionTime = 0.0f;
         static bool wasNearInteractable = false;
 
-        if (nearInteractable) {
-            showInteractPrompt = true;
-            interactPromptText = interactableName;
+        if (showInteractPrompt) {
             lastInteractionTime = currentTime;
             wasNearInteractable = true;
         } else {
@@ -1490,7 +1495,6 @@ int main(void)
 
                 // Draw jump height indicator (optional visual feedback)
                 if (isJumping) {
-                    float jumpHeight = playerY - groundLevel;
                     // Debug jump height text removed for clean UI
                 }
 
@@ -1523,7 +1527,6 @@ int main(void)
             DrawFPS(10, 10);
 
             // Persistent testing display (always visible, no blinking)
-            int yOffset = 30;
 
             // ===== IMPROVED UI LAYOUT SYSTEM =====
             // Organized layout to prevent overlaps and improve readability
@@ -1755,6 +1758,7 @@ int main(void)
 
             // Draw projected labels for buildings and NPCs
             // For buildings
+            auto objects = environment.getAllObjects();
             for (const auto& obj : objects) {
                 if (auto building = std::dynamic_pointer_cast<Building>(obj)) {
                     Vector3 signPos = building->getDoorPosition();
