@@ -31,16 +31,17 @@ void updatePlayer(Camera3D& camera, GameState& state, const EnvironmentManager& 
     }
 
     camera.position.y = state.playerY + eyeHeight;
-    camera.target.y = camera.position.y - 0.2f; // Slight downward for realism
 
     // Only update camera when not in dialog mode
     if (!state.isInDialog) {
         // Store original position before any movement
         Vector3 originalPosition = camera.position;
 
-        // Calculate intended new position from camera controls
+        // Calculate intended new position and view from camera controls
         UpdateCamera(&camera, CAMERA_FIRST_PERSON);  // Update camera (movement and looking)
+
         Vector3 intendedPosition = camera.position;
+        Vector3 viewDirection = Vector3Subtract(camera.target, intendedPosition);
 
         // Reset camera to original position for collision checking
         camera.position = originalPosition;
@@ -48,7 +49,9 @@ void updatePlayer(Camera3D& camera, GameState& state, const EnvironmentManager& 
         // Apply collision detection and resolution to intended position
         CollisionSystem::resolveCollisions(intendedPosition, originalPosition, PLAYER_RADIUS, PLAYER_HEIGHT, state.playerY, eyeHeight, groundLevel, environment, state.isInBuilding, state.currentBuilding);
 
+        // Set adjusted position and preserve view direction
         camera.position = intendedPosition;
+        camera.target = Vector3Add(camera.position, viewDirection);
 
         // Update playerY based on new camera y
         state.playerY = camera.position.y - eyeHeight;

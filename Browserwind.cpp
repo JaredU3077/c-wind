@@ -1,5 +1,6 @@
 // Browserwind.cpp
-// A very simple minimal working vertical slice of a 3D FPS like Browserwind.
+// A very simple minimal working vertical slice of a 3D FPS like
+// .
 // This uses raylib (https://www.raylib.com/) for simplicity in handling window, input, and 3D rendering.
 // Compile with: g++ Browserwind.cpp -o Browserwind -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 (adjust for your platform)
 // Assumes raylib is installed and linked properly.
@@ -728,9 +729,9 @@ int main(void)
                     float minZ = bPos.z - halfD;
                     float maxZ = bPos.z + halfD;
 
-                    newPosition.x = std::clamp(newPosition.x, minX, maxX);
-                    newPosition.y = std::clamp(newPosition.y, minY + eyeHeight, maxY);
-                    newPosition.z = std::clamp(newPosition.z, minZ, maxZ);
+                    newPosition.x = std::max(minX, std::min(maxX, newPosition.x));
+                    newPosition.y = std::max(minY + eyeHeight, std::min(maxY, newPosition.y));
+                    newPosition.z = std::max(minZ, std::min(maxZ, newPosition.z));
                 }
             }
         }
@@ -1153,7 +1154,7 @@ int main(void)
         }
 
         camera.position.y = playerY + eyeHeight;
-        camera.target.y = camera.position.y - 0.2f; // Slight downward for realism
+        // Removed: camera.target.y = camera.position.y - 0.2f;  // This was forcing vertical look reset
 
         // Update
         // Only update camera when not in dialog mode

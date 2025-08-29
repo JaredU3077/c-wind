@@ -294,9 +294,9 @@ void CollisionSystem::resolveCollisions(Vector3& newPosition, const Vector3& ori
                 float minZ = bPos.z - halfD;
                 float maxZ = bPos.z + halfD;
 
-                newPosition.x = std::clamp(newPosition.x, minX, maxX);
-                newPosition.y = std::clamp(newPosition.y, minY + eyeHeight, maxY);
-                newPosition.z = std::clamp(newPosition.z, minZ, maxZ);
+                newPosition.x = std::max(minX, std::min(maxX, newPosition.x));
+                newPosition.y = std::max(minY + eyeHeight, std::min(maxY, newPosition.y));
+                newPosition.z = std::max(minZ, std::min(maxZ, newPosition.z));
             }
         }
     }
