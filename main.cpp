@@ -53,8 +53,7 @@ int main(void)
     // Initialize combat system
     initCombat();
 
-    // Initialize NPCs
-    initNPCs();
+    // NPCs are now initialized in Browserwind.cpp to prevent conflicts
 
     // Main game loop with custom ESC handling
     float lastEscPressTime = -10.0f; // Initialize to a time long ago

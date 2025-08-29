@@ -704,10 +704,29 @@ int main(void)
             newPosition = originalPosition;
         }
 
-        // Check NPC collisions (still using old system for NPCs)
+        // Check NPC collisions with improved resolution
         if (capsuleNPCCollision(newPosition, PLAYER_RADIUS, PLAYER_HEIGHT)) {
-            // For NPCs, use simpler resolution - just revert
-            newPosition = originalPosition;
+            // Try to find a safe position by moving away from the NPC
+            bool foundSafePosition = false;
+            for (int attempt = 0; attempt < 8 && !foundSafePosition; attempt++) {
+                float angle = (attempt * 45.0f) * DEG2RAD; // Try 8 directions
+                float distance = PLAYER_RADIUS + 0.8f; // Move away by safe distance
+                Vector3 testPosition = {
+                    originalPosition.x + cosf(angle) * distance,
+                    originalPosition.y,
+                    originalPosition.z + sinf(angle) * distance
+                };
+
+                if (!capsuleNPCCollision(testPosition, PLAYER_RADIUS, PLAYER_HEIGHT)) {
+                    newPosition = testPosition;
+                    foundSafePosition = true;
+                }
+            }
+
+            // If no safe position found, revert to original (last resort)
+            if (!foundSafePosition) {
+                newPosition = originalPosition;
+            }
         }
 
         // If inside building, clamp position to interior bounds to prevent walking through walls
@@ -774,9 +793,11 @@ int main(void)
     );
     environment.addObject(shopBuilding);
 
-    // Initialize NPCs for the two buildings (positioned inside buildings)
+    // Initialize NPCs for the two buildings (GROUND LEVEL positions)
+    // Mayor's Building: Center at {0.0f, 2.5f, -12.0f}, Size {10.0f, 5.0f, 8.0f}
+    // Player enters at {0.0f, 1.75f, -11.0f} (center.z + 1.0f)
     npcs[0] = {
-        .position = {0.0f, 0.0f, -10.0f},     // Inside Mayor's Building (moved forward from center)
+        .position = {0.0f, 0.0f, -14.0f},    // GROUND LEVEL position inside Mayor's Building
         .name = "Mayor White",
         .dialog = "Greetings, citizen! Welcome to my office. What brings you here today?",
         .color = WHITE,
@@ -784,8 +805,10 @@ int main(void)
         .interactionRadius = 3.0f
     };
 
+    // Shop Keeper's Building: Center at {12.0f, 2.5f, 0.0f}, Size {8.0f, 5.0f, 6.0f}
+    // Player enters at {12.0f, 1.75f, 1.0f} (center.z + 1.0f)
     npcs[1] = {
-        .position = {14.0f, 0.0f, 0.0f},      // Inside Shop Keeper's Building (moved forward from center)
+        .position = {12.0f, 0.0f, -3.0f},    // GROUND LEVEL position inside Shop Building
         .name = "Buster Shoppin",
         .dialog = "Welcome to my shop! I've got all sorts of goods and supplies for sale.",
         .color = GREEN,
@@ -841,22 +864,32 @@ int main(void)
     {
         float currentTime = GetTime();
 
-        // Handle ESC key for mouse capture/release
+        // Handle ESC key for mouse capture/release and dialog exit
         if (IsKeyPressed(KEY_ESCAPE)) {
             if (currentTime - lastEscPressTime < 0.5f) {
                 // Double ESC press within 0.5 seconds: Close window
                 shouldClose = true;
                 break;
             } else {
-                // Single ESC press: Toggle mouse capture
-                if (!mouseReleased) {
-                    // First ESC press: Release mouse cursor
-                    EnableCursor();
-                    mouseReleased = true;
+                // If in dialog mode, exit dialog first
+                if (isInDialog) {
+                    isInDialog = false;
+                    showDialogWindow = false;
+                    // Re-capture mouse cursor for FPS gameplay (only if not released by user)
+                    if (!mouseReleased) {
+                        DisableCursor();
+                    }
                 } else {
-                    // ESC while mouse is released: Re-capture mouse
-                    DisableCursor();
-                    mouseReleased = false;
+                    // Single ESC press: Toggle mouse capture
+                    if (!mouseReleased) {
+                        // First ESC press: Release mouse cursor
+                        EnableCursor();
+                        mouseReleased = true;
+                    } else {
+                        // ESC while mouse is released: Re-capture mouse
+                        DisableCursor();
+                        mouseReleased = false;
+                    }
                 }
                 lastEscPressTime = currentTime;
             }
@@ -928,12 +961,14 @@ int main(void)
                         nearInteractable = true;
                         interactableName = "Press E to enter " + building->getName();
                         if (eKeyPressed) {
-                            // Enter building
+                            // Enter building - position player safely inside, away from walls and NPCs
                             isInBuilding = true;
                             currentBuilding = static_cast<int>(i);
                             lastOutdoorPosition = camera.position;
-                            camera.position = {building->position.x, eyeHeight, building->position.z + 2.0f}; // Start inside
-                            camera.target = {building->position.x, eyeHeight - 0.2f, building->position.z + 5.0f};
+
+                            // Position player 1 unit inside from the door (safer positioning)
+                            camera.position = {building->position.x, eyeHeight, building->position.z + 1.0f};
+                            camera.target = {building->position.x, eyeHeight - 0.2f, building->position.z + 4.0f};
                             playerY = 0.0f;
                             testBuildingEntry = true;
                             break; // Prevent multiple building entries
@@ -989,12 +1024,18 @@ int main(void)
         if (isInDialog && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             Vector2 mousePos = GetMousePosition();
 
-            // Improved button detection using same constants as rendering
-            const int buttonY = 320;
+            // Use the same centered dialog positioning as rendering
+            int dialogWidth = 600;
+            int dialogHeight = 200;
+            int dialogX = (screenWidth - dialogWidth) / 2;
+            int dialogY = (screenHeight - dialogHeight) / 2;
+
+            // Button positioning relative to centered dialog (same as rendering)
+            int buttonY = dialogY + 100; // Same as rendering
             const int buttonHeight = 30;
             const int buttonWidth = 150;
             const int buttonSpacing = 170;
-            const int startX = 50;
+            int startX = dialogX + 25; // Same as rendering
 
             for (int i = 0; i < numDialogOptions; i++) {
                 int buttonX = startX + (i * buttonSpacing);
@@ -1209,37 +1250,89 @@ int main(void)
                 }
                 DrawPlane((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector2){ 16.0f, 16.0f }, groundColor);
 
-                // ===== RENDER ENVIRONMENTAL OBJECTS =====
-                environment.renderAll();
-
                 // ===== BUILDING INTERIOR RENDERING =====
-                // Render building interiors when player is inside
+                // Render building interiors FIRST (before environment) when player is inside
                 if (isInBuilding && currentBuilding >= 0) {
                     auto objects = environment.getAllObjects();
                     if (currentBuilding < static_cast<int>(objects.size())) {
                         if (auto building = std::dynamic_pointer_cast<Building>(objects[currentBuilding])) {
-                            // Draw opaque interior walls (slightly smaller than exterior to prevent z-fighting)
-                            float interiorScale = 0.95f;
+                            // Draw solid interior walls - individual faces for proper enclosure
                             Vector3 buildingSize = building->getSize();
-                            DrawCube(building->position,
-                                    buildingSize.x * interiorScale,
-                                    buildingSize.y * interiorScale,
-                                    buildingSize.z * interiorScale,
-                                    Fade(building->getColor(), 1.0f)); // Fully opaque
+                            Vector3 pos = building->position;
+                            Color interiorWallColor = building->getColor();
+
+                            // Make interior walls slightly smaller to avoid z-fighting with exterior
+                            float wallThickness = 0.3f; // Thick walls for proper enclosure
+                            float interiorInset = 0.1f;  // Small inset from exterior walls
+
+                            // Calculate interior dimensions (smaller than exterior)
+                            float interiorWidth = buildingSize.x - (2 * interiorInset);
+                            float interiorHeight = buildingSize.y - (2 * interiorInset);
+                            float interiorDepth = buildingSize.z - (2 * interiorInset);
+
+                            // ===== DRAW INDIVIDUAL WALL FACES WITH DOOR OPENING =====
+
+                            // Get door position to create opening in the correct wall
+                            Vector3 doorPos = building->getDoorPosition();
+                            Vector3 doorOffset = {
+                                doorPos.x - building->position.x,
+                                doorPos.y - building->position.y,
+                                doorPos.z - building->position.z
+                            };
+
+                            // Door dimensions for creating wall opening
+                            float doorWidth = 1.2f;
+                            float doorHeight = 2.8f;
+
+                            // Front wall (North face - +Z) - check if door is on this face
+                            if (fabs(doorOffset.z - (buildingSize.z/2)) > 0.5f) { // Door not on this face
+                                Vector3 frontWallPos = {pos.x, pos.y, pos.z + interiorDepth/2};
+                                DrawCube(frontWallPos, interiorWidth, interiorHeight, wallThickness, Fade(interiorWallColor, 1.0f));
+                            } else { // Door is on this face - create opening
+                                // Left part of front wall
+                                float leftWallWidth = (interiorWidth/2) + doorOffset.x - (doorWidth/2);
+                                if (leftWallWidth > 0.1f) {
+                                    Vector3 leftWallPos = {pos.x - (interiorWidth/2 - leftWallWidth/2), pos.y, pos.z + interiorDepth/2};
+                                    DrawCube(leftWallPos, leftWallWidth, interiorHeight, wallThickness, Fade(interiorWallColor, 1.0f));
+                                }
+                                // Right part of front wall
+                                float rightWallWidth = (interiorWidth/2) - doorOffset.x - (doorWidth/2);
+                                if (rightWallWidth > 0.1f) {
+                                    Vector3 rightWallPos = {pos.x + (interiorWidth/2 - rightWallWidth/2), pos.y, pos.z + interiorDepth/2};
+                                    DrawCube(rightWallPos, rightWallWidth, interiorHeight, wallThickness, Fade(interiorWallColor, 1.0f));
+                                }
+                                // Top part of front wall (above door)
+                                Vector3 topWallPos = {pos.x, pos.y + (interiorHeight/2 - doorHeight/2), pos.z + interiorDepth/2};
+                                DrawCube(topWallPos, doorWidth + 0.2f, interiorHeight - doorHeight, wallThickness, Fade(interiorWallColor, 1.0f));
+                            }
+
+                            // Back wall (South face - -Z)
+                            Vector3 backWallPos = {pos.x, pos.y, pos.z - interiorDepth/2};
+                            DrawCube(backWallPos, interiorWidth, interiorHeight, wallThickness, Fade(interiorWallColor, 1.0f));
+
+                            // Left wall (West face - -X)
+                            Vector3 leftWallPos = {pos.x - interiorWidth/2, pos.y, pos.z};
+                            DrawCube(leftWallPos, wallThickness, interiorHeight, interiorDepth, Fade(interiorWallColor, 1.0f));
+
+                            // Right wall (East face - +X)
+                            Vector3 rightWallPos = {pos.x + interiorWidth/2, pos.y, pos.z};
+                            DrawCube(rightWallPos, wallThickness, interiorHeight, interiorDepth, Fade(interiorWallColor, 1.0f));
 
                             // Draw interior floor at consistent world ground level (Y=0)
-                            Vector3 floorPos = {building->position.x, 0.0f, building->position.z}; // Y=0 for consistent ground level
-                            DrawCube(floorPos, buildingSize.x * 0.9f, 0.1f, buildingSize.z * 0.9f, DARKGRAY);
+                            Vector3 floorPos = {building->position.x, 0.0f, building->position.z};
+                            DrawCube(floorPos, interiorWidth, 0.1f, interiorDepth, DARKGRAY);
 
-                            // Draw interior ceiling
+                            // Draw interior ceiling at the top of the building (not halfway up!)
                             Vector3 ceilingPos = {building->position.x, building->position.y + buildingSize.y/2 - 0.05f, building->position.z};
-                            DrawCube(ceilingPos, buildingSize.x * 0.9f, 0.1f, buildingSize.z * 0.9f, LIGHTGRAY);
+                            DrawCube(ceilingPos, interiorWidth, 0.1f, interiorDepth, LIGHTGRAY);
 
-                            // Add subtle interior lighting
-                            DrawSphere(building->position, 2.0f, Fade(WHITE, 0.1f));
+                            // Interior walls with door opening complete
                         }
                     }
                 }
+
+                // ===== RENDER ENVIRONMENTAL OBJECTS =====
+                environment.renderAll();
 
                 // ===== INTERACTION SYSTEM =====
                 // Handle building interactions
@@ -1285,6 +1378,10 @@ int main(void)
 
                     if (shouldDrawNPC) {
                         // ===== ENHANCED HUMANOID NPC RENDERING =====
+                        // NPC positions are FIXED and INDEPENDENT of door positions
+
+                        // NPC positions are now properly set at ground level
+
                         // Draw NPC body (more detailed humanoid shape)
                         DrawCylinder(npcs[n].position, 0.8f, 0.5f, 1.6f, 12, npcs[n].color); // Taller, more detailed body
                         DrawCylinderWires(npcs[n].position, 0.8f, 0.5f, 1.6f, 12, BLACK);
@@ -1338,18 +1435,7 @@ int main(void)
                 // ===== ENVIRONMENTAL OBJECTS RENDERED =====
                 // All environmental objects (well, trees, buildings) are now rendered through the universal environmental system above
 
-                // Current location indicator
-                if (isInBuilding && currentBuilding >= 0) {
-                    // Find the building name from the environmental objects
-                    auto objects = environment.getAllObjects();
-                    if (currentBuilding < objects.size()) {
-                        DrawText(("Inside: " + objects[currentBuilding]->getName()).c_str(), 10, 40, 16, YELLOW);
-                    } else {
-                        DrawText("Inside Building", 10, 40, 16, YELLOW);
-                    }
-                } else {
-                    DrawText("Town Square", 10, 40, 16, GREEN);
-                }
+                // Location indicator text removed for clean UI
 
                 // Draw longsword swings
                 for (int s = 0; s < MAX_SWINGS; s++) {
@@ -1405,7 +1491,7 @@ int main(void)
                 // Draw jump height indicator (optional visual feedback)
                 if (isJumping) {
                     float jumpHeight = playerY - groundLevel;
-                    DrawText(TextFormat("Jumping: %.1fm", jumpHeight), 10, 160, 16, WHITE);
+                    // Debug jump height text removed for clean UI
                 }
 
             EndMode3D();
@@ -1439,75 +1525,82 @@ int main(void)
             // Persistent testing display (always visible, no blinking)
             int yOffset = 30;
 
-            // Enhanced testing display - organized and comprehensive
-            // Main testing panel background
-            DrawRectangle(5, 25, 500, 400, Fade(BLACK, 0.8f));
-            DrawRectangleLines(5, 25, 500, 400, BLUE);
+            // ===== IMPROVED UI LAYOUT SYSTEM =====
+            // Organized layout to prevent overlaps and improve readability
+
+            // Left Panel - Status & Controls
+            int leftPanelX = 10;
+            int leftPanelY = 25;
+            int leftPanelWidth = 320;
+            int leftPanelHeight = 350;
+
+            DrawRectangle(leftPanelX, leftPanelY, leftPanelWidth, leftPanelHeight, Fade(BLACK, 0.85f));
+            DrawRectangleLines(leftPanelX, leftPanelY, leftPanelWidth, leftPanelHeight, BLUE);
 
             // Title
-            DrawText("🎮 BROWSERWIND - FEATURE STATUS", 15, yOffset, 18, SKYBLUE);
-            yOffset += 25;
+            DrawText("🎮 BROWSERWIND - STATUS", leftPanelX + 10, leftPanelY + 5, 16, SKYBLUE);
+            int statusY = leftPanelY + 25;
 
             // Movement & Controls Section
-            DrawText("─── MOVEMENT & CONTROLS ───", 15, yOffset, 14, YELLOW);
-            yOffset += 18;
+            DrawText("─── MOVEMENT & CONTROLS ───", leftPanelX + 10, statusY, 12, YELLOW);
+            statusY += 16;
 
             // Mouse capture test
             Color mouseColor = testMouseCaptured ? GREEN : RED;
-            DrawText(TextFormat("🖱️  Mouse Capture: %s", testMouseCaptured ? "✓ WORKING" : "✗ BROKEN"), 20, yOffset, 12, mouseColor);
-            yOffset += 15;
+            DrawText(TextFormat("🖱️  Mouse: %s", testMouseCaptured ? "✓ WORKING" : "✗ BROKEN"), leftPanelX + 15, statusY, 10, mouseColor);
+            statusY += 14;
 
             // WASD movement test
             Color wasdColor = testWASDMovement ? GREEN : ORANGE;
-            DrawText(TextFormat("🏃 WASD Movement: %s", testWASDMovement ? "✓ TESTED" : "⏳ UNTESTED"), 20, yOffset, 12, wasdColor);
-            yOffset += 15;
+            DrawText(TextFormat("🏃 WASD: %s", testWASDMovement ? "✓ TESTED" : "⏳ UNTESTED"), leftPanelX + 15, statusY, 10, wasdColor);
+            statusY += 14;
 
             // Space jump test
             Color jumpColor = testSpaceJump ? GREEN : ORANGE;
-            DrawText(TextFormat("🦘 Space Jump: %s", testSpaceJump ? "✓ TESTED" : "⏳ UNTESTED"), 20, yOffset, 12, jumpColor);
-            yOffset += 15;
+            DrawText(TextFormat("🦘 Space: %s", testSpaceJump ? "✓ TESTED" : "⏳ UNTESTED"), leftPanelX + 15, statusY, 10, jumpColor);
+            statusY += 14;
 
             // Mouse look test
             Color lookColor = testMouseLook ? GREEN : ORANGE;
-            DrawText(TextFormat("👁️  Mouse Look: %s", testMouseLook ? "✓ TESTED" : "⏳ UNTESTED"), 20, yOffset, 12, lookColor);
-            yOffset += 18;
+            DrawText(TextFormat("👁️  Look: %s", testMouseLook ? "✓ TESTED" : "⏳ UNTESTED"), leftPanelX + 15, statusY, 10, lookColor);
+            statusY += 16;
 
             // Combat Section
-            DrawText("─── COMBAT SYSTEM ───", 15, yOffset, 14, YELLOW);
-            yOffset += 18;
+            DrawText("─── COMBAT ───", leftPanelX + 10, statusY, 12, YELLOW);
+            statusY += 16;
 
             // Melee swing test
             Color swingColor = testMeleeSwing ? GREEN : ORANGE;
-            DrawText(TextFormat("⚔️  Melee Attack: %s", testMeleeSwing ? "✓ TESTED" : "⏳ UNTESTED"), 20, yOffset, 12, swingColor);
-            yOffset += 15;
+            DrawText(TextFormat("⚔️  Attack: %s", testMeleeSwing ? "✓ TESTED" : "⏳ UNTESTED"), leftPanelX + 15, statusY, 10, swingColor);
+            statusY += 14;
 
             // Melee hit detection test
             Color hitColor = testMeleeHitDetection ? GREEN : ORANGE;
-            DrawText(TextFormat("🎯 Hit Detection: %s", testMeleeHitDetection ? "✓ TESTED" : "⏳ UNTESTED"), 20, yOffset, 12, hitColor);
-            yOffset += 18;
+            DrawText(TextFormat("🎯 Hits: %s", testMeleeHitDetection ? "✓ TESTED" : "⏳ UNTESTED"), leftPanelX + 15, statusY, 10, hitColor);
+            statusY += 16;
 
             // World Interaction Section
-            DrawText("─── WORLD INTERACTION ───", 15, yOffset, 14, YELLOW);
-            yOffset += 18;
+            DrawText("─── WORLD ───", leftPanelX + 10, statusY, 12, YELLOW);
+            statusY += 16;
 
             // Building entry test
             Color buildingColor = testBuildingEntry ? GREEN : ORANGE;
-            DrawText(TextFormat("🏛️  Building Entry: %s", testBuildingEntry ? "✓ TESTED" : "⏳ UNTESTED"), 20, yOffset, 12, buildingColor);
-            yOffset += 15;
+            DrawText(TextFormat("🏛️  Buildings: %s", testBuildingEntry ? "✓ TESTED" : "⏳ UNTESTED"), leftPanelX + 15, statusY, 10, buildingColor);
+            statusY += 14;
 
             // NPC interaction test
             Color npcColor = testNPCInteraction ? GREEN : ORANGE;
-            DrawText(TextFormat("👥 NPC Dialog: %s", testNPCInteraction ? "✓ TESTED" : "⏳ UNTESTED"), 20, yOffset, 12, npcColor);
-            yOffset += 18;
+            DrawText(TextFormat("👥 NPCs: %s", testNPCInteraction ? "✓ TESTED" : "⏳ UNTESTED"), leftPanelX + 15, statusY, 10, npcColor);
+            statusY += 16;
 
-            // System Status Section
-            DrawText("─── SYSTEM STATUS ───", 15, yOffset, 14, YELLOW);
-            yOffset += 18;
+            // Status Section
+            DrawText("─── STATUS ───", leftPanelX + 10, statusY, 12, YELLOW);
+            statusY += 16;
 
             // Mouse state
             Color mouseStateColor = mouseReleased ? ORANGE : GREEN;
-            DrawText(TextFormat("🖱️  Mouse State: %s", mouseReleased ? "FREE" : "CAPTURED"), 20, yOffset, 12, mouseStateColor);
-            yOffset += 15;
+            DrawText(TextFormat("🖱️  %s", mouseReleased ? "FREE" : "CAPTURED"), leftPanelX + 15, statusY, 10, mouseStateColor);
+            statusY += 14;
 
             // Current location
             Color locationColor = isInBuilding ? BLUE : GREEN;
@@ -1518,68 +1611,81 @@ int main(void)
                     locationText = objects[currentBuilding]->getName();
                 }
             }
-            DrawText(TextFormat("📍 Location: %s", locationText.c_str()), 20, yOffset, 12, locationColor);
-            yOffset += 15;
+            DrawText(TextFormat("📍 %s", locationText.c_str()), leftPanelX + 15, statusY, 10, locationColor);
+            statusY += 14;
 
             // Dialog state
             Color dialogColor = isInDialog ? PURPLE : GRAY;
-            DrawText(TextFormat("💬 Dialog: %s", isInDialog ? "ACTIVE" : "INACTIVE"), 20, yOffset, 12, dialogColor);
-            yOffset += 20;
+            DrawText(TextFormat("💬 %s", isInDialog ? "ACTIVE" : "INACTIVE"), leftPanelX + 15, statusY, 10, dialogColor);
+            statusY += 16;
 
-            // Instructions
-            DrawText("🎯 TEST ALL FEATURES:", 15, yOffset, 12, WHITE);
-            yOffset += 15;
-            DrawText("   WASD + Mouse + Space + LMB + E", 20, yOffset, 10, LIGHTGRAY);
-            yOffset += 15;
-            DrawText("   ESC: Toggle mouse capture", 20, yOffset, 10, LIGHTGRAY);
-            yOffset += 20;
-            DrawText("📊 STATUS: 🟢 WORKING | 🟠 UNTESTED | 🔴 BROKEN", 15, yOffset, 10, GRAY);
+            // Instructions (compact)
+            DrawText("🎯 TEST: WASD+Mouse+Space+LMB+E", leftPanelX + 10, statusY, 9, WHITE);
+            statusY += 12;
+            DrawText("ESC: Toggle mouse capture", leftPanelX + 10, statusY, 9, LIGHTGRAY);
 
-            // Game stats display (moved down to avoid overlapping with larger testing panel)
-            DrawRectangle(5, 450, 250, 100, Fade(BLACK, 0.8f));
-            DrawRectangleLines(5, 450, 250, 100, GREEN);
+            // ===== BOTTOM LEFT PANEL - GAME STATISTICS =====
+            int statsPanelY = leftPanelY + leftPanelHeight + 10;
+            int statsPanelHeight = 120;
 
-            DrawText("📊 GAME STATISTICS", 15, 455, 16, LIME);
-            DrawText(TextFormat("🏆 Score: %d points", score), 20, 475, 12, WHITE);
-            DrawText(TextFormat("⚔️  Swings: %d", swingsPerformed), 20, 490, 12, WHITE);
-            DrawText(TextFormat("🎯 Hits: %d", meleeHits), 20, 505, 12, WHITE);
+            DrawRectangle(leftPanelX, statsPanelY, leftPanelWidth, statsPanelHeight, Fade(BLACK, 0.85f));
+            DrawRectangleLines(leftPanelX, statsPanelY, leftPanelWidth, statsPanelHeight, GREEN);
+
+            DrawText("📊 GAME STATISTICS", leftPanelX + 10, statsPanelY + 5, 14, LIME);
+            DrawText(TextFormat("🏆 Score: %d points", score), leftPanelX + 15, statsPanelY + 25, 11, WHITE);
+            DrawText(TextFormat("⚔️  Swings: %d", swingsPerformed), leftPanelX + 15, statsPanelY + 38, 11, WHITE);
+            DrawText(TextFormat("🎯 Hits: %d", meleeHits), leftPanelX + 15, statsPanelY + 51, 11, WHITE);
             float accuracy = swingsPerformed > 0 ? (float)meleeHits / swingsPerformed * 100.0f : 0.0f;
-            DrawText(TextFormat("📈 Accuracy: %.1f%%", accuracy), 20, 520, 12, WHITE);
-            DrawText(TextFormat("🏢 Buildings: %d/2", testBuildingEntry ? 1 : 0), 20, 535, 12, BLUE);
+            DrawText(TextFormat("📈 Accuracy: %.1f%%", accuracy), leftPanelX + 15, statsPanelY + 64, 11, WHITE);
+            DrawText(TextFormat("🏢 Buildings: %d/2", testBuildingEntry ? 1 : 0), leftPanelX + 15, statsPanelY + 77, 11, BLUE);
+            DrawText("🟢 WORKING | 🟠 UNTESTED | 🔴 BROKEN", leftPanelX + 10, statsPanelY + 95, 9, GRAY);
 
-            // Improved interaction prompt with better visibility
+            // ===== TOP-RIGHT INTERACTION PROMPT =====
             if (showInteractPrompt && !isInDialog) {
+                int promptX = screenWidth - 320;
+                int promptY = 100;
+                int promptWidth = 300;
+                int promptHeight = 50;
+
                 // Animated background for better visibility
                 float alpha = 0.8f + sinf(currentTime * 3.0f) * 0.1f; // Subtle pulsing
-                DrawRectangle(5, 280, 400, 50, Fade(BLACK, alpha));
-                DrawRectangleLines(5, 280, 400, 50, YELLOW);
+                DrawRectangle(promptX, promptY, promptWidth, promptHeight, Fade(BLACK, alpha));
+                DrawRectangleLines(promptX, promptY, promptWidth, promptHeight, YELLOW);
 
                 // Draw prompt text with better formatting
-                DrawText(interactPromptText.c_str(), 15, 290, 14, YELLOW);
-                DrawText("[E] to interact", 15, 305, 12, WHITE);
+                DrawText(interactPromptText.c_str(), promptX + 10, promptY + 8, 14, YELLOW);
+                DrawText("[E] to interact", promptX + 10, promptY + 25, 12, WHITE);
 
                 // Add a small icon indicator
-                DrawCircle(385, 305, 3, YELLOW);
+                DrawCircle(promptX + promptWidth - 15, promptY + promptHeight - 15, 3, YELLOW);
             }
 
             // Dialog window
             if (isInDialog && showDialogWindow) {
+                // Center the dialog window on screen to avoid overlap with top left UI
+                int dialogWidth = 600;
+                int dialogHeight = 200;
+                int dialogX = (screenWidth - dialogWidth) / 2;
+                int dialogY = (screenHeight - dialogHeight) / 2;
+
                 // Main dialog background
-                DrawRectangle(30, 250, 540, 180, Fade(BLACK, 0.9f));
-                DrawRectangleLines(30, 250, 540, 180, WHITE);
+                DrawRectangle(dialogX, dialogY, dialogWidth, dialogHeight, Fade(BLACK, 0.9f));
+                DrawRectangleLines(dialogX, dialogY, dialogWidth, dialogHeight, WHITE);
 
-                // Dialog title
-                DrawText("Conversation", 40, 260, 18, SKYBLUE);
+                // Dialog title (centered)
+                int titleX = dialogX + (dialogWidth - MeasureText("Conversation", 18)) / 2;
+                DrawText("Conversation", titleX, dialogY + 15, 18, SKYBLUE);
 
-                // Dialog text
-                DrawText(dialogText.c_str(), 40, 285, 14, WHITE);
+                // Dialog text (centered)
+                int textX = dialogX + 20;
+                DrawText(dialogText.c_str(), textX, dialogY + 45, 14, WHITE);
 
                 // Improved dialog options as clickable buttons with better feedback
-                const int buttonY = 320;
+                int buttonY = dialogY + 100; // Position buttons relative to centered dialog
                 const int buttonHeight = 30;
                 const int buttonWidth = 150;
                 const int buttonSpacing = 170;
-                const int startX = 50;
+                int startX = dialogX + 25; // Center buttons within dialog
 
                 Vector2 mousePos = GetMousePosition();
 
@@ -1610,32 +1716,42 @@ int main(void)
                     }
                 }
 
-                // Instructions
-                DrawText("Click on an option to continue", 40, 410, 12, LIGHTGRAY);
+                // Instructions (positioned relative to centered dialog)
+                int instructionsX = dialogX + (dialogWidth - MeasureText("Click on an option to continue", 12)) / 2;
+                DrawText("Click on an option to continue", instructionsX, dialogY + 175, 12, LIGHTGRAY);
 
-                // Debug: Show mouse position for troubleshooting
-                DrawText(TextFormat("Mouse: %.0f, %.0f", mousePos.x, mousePos.y), 400, 410, 10, YELLOW);
+                // Debug: Show mouse position for troubleshooting (keep in top right)
+                DrawText(TextFormat("Mouse: %.0f, %.0f", mousePos.x, mousePos.y), screenWidth - 150, 30, 10, YELLOW);
             }
 
-            // Town navigation help
-            DrawRectangle(5, 340, 300, 60, Fade(BLACK, 0.7f));
-            DrawRectangleLines(5, 340, 300, 60, BLUE);
-            DrawText("=== CONTROLS ===", 10, 345, 12, SKYBLUE);
-            DrawText("WASD: Move | Mouse: Look | Space: Jump", 10, 360, 10, LIGHTGRAY);
-            DrawText("LMB: Attack | E: Interact", 10, 375, 10, LIGHTGRAY);
+            // ===== RIGHT SIDE PANELS =====
+            // Move controls help to top-right to avoid left side overlaps
+            int controlsPanelX = screenWidth - 350;
+            int controlsPanelY = 400;
+            int controlsPanelWidth = 330;
+            int controlsPanelHeight = 80;
 
-            // Collision warning indicator
+            DrawRectangle(controlsPanelX, controlsPanelY, controlsPanelWidth, controlsPanelHeight, Fade(BLACK, 0.7f));
+            DrawRectangleLines(controlsPanelX, controlsPanelY, controlsPanelWidth, controlsPanelHeight, BLUE);
+            DrawText("🎮 CONTROLS", controlsPanelX + 10, controlsPanelY + 8, 14, SKYBLUE);
+            DrawText("WASD: Move | Mouse: Look | Space: Jump", controlsPanelX + 10, controlsPanelY + 25, 10, LIGHTGRAY);
+            DrawText("LMB: Attack | E: Interact | ESC: Toggle mouse", controlsPanelX + 10, controlsPanelY + 38, 10, LIGHTGRAY);
+            DrawText("🟢 WORKING | 🟠 UNTESTED | 🔴 BROKEN", controlsPanelX + 10, controlsPanelY + 55, 9, GRAY);
+
+            // Collision warning indicator (moved to right side)
             if (testBuildingCollision) {
-                DrawRectangle(5, 405, 200, 25, Fade(RED, 0.8f));
-                DrawRectangleLines(5, 405, 200, 25, WHITE);
-                DrawText("⚠️  WALL COLLISION", 10, 410, 10, WHITE);
+                int warningPanelY = controlsPanelY + controlsPanelHeight + 10;
+                DrawRectangle(controlsPanelX, warningPanelY, controlsPanelWidth, 30, Fade(RED, 0.8f));
+                DrawRectangleLines(controlsPanelX, warningPanelY, controlsPanelWidth, 30, WHITE);
+                DrawText("⚠️  WALL COLLISION DETECTED", controlsPanelX + 10, warningPanelY + 8, 11, WHITE);
             }
 
-            // Mouse state debug indicator (using existing mouseStateColor variable)
+            // Mouse state indicator (moved to bottom-right)
             const char* mouseStateText = mouseReleased ? "MOUSE FREE" : "MOUSE CAPTURED";
-            DrawRectangle(5, 430, 150, 20, Fade(mouseStateColor, 0.7f));
-            DrawRectangleLines(5, 430, 150, 20, WHITE);
-            DrawText(mouseStateText, 10, 432, 10, WHITE);
+            int mousePanelY = screenHeight - 40;
+            DrawRectangle(controlsPanelX, mousePanelY, controlsPanelWidth, 30, Fade(mouseStateColor, 0.7f));
+            DrawRectangleLines(controlsPanelX, mousePanelY, controlsPanelWidth, 30, WHITE);
+            DrawText(mouseStateText, controlsPanelX + 10, mousePanelY + 8, 12, WHITE);
 
             // Draw projected labels for buildings and NPCs
             // For buildings
@@ -1762,8 +1878,8 @@ void handleDialogOption(int optionIndex) {
                 showDialogWindow = false;
                 // Re-capture mouse cursor for FPS gameplay (only if not released by user)
                 if (!mouseReleased) {
-                DisableCursor();
-            }
+                    DisableCursor();
+                }
             }
             break;
 
@@ -1778,8 +1894,8 @@ void handleDialogOption(int optionIndex) {
                 showDialogWindow = false;
                 // Re-capture mouse cursor for FPS gameplay (only if not released by user)
                 if (!mouseReleased) {
-                DisableCursor();
-            }
+                    DisableCursor();
+                }
             }
             break;
     }
