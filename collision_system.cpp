@@ -4,6 +4,7 @@
 #include "environment_manager.h"   // For EnvironmentManager
 
 bool CollisionSystem::checkCollision(const CollisionBounds& bounds1, const CollisionBounds& bounds2) {
+    // Removed excessive debug logging for performance
     switch (bounds1.shape) {
         case CollisionShape::BOX:
             return checkBoxCollision(bounds1, bounds2);
@@ -33,6 +34,23 @@ bool CollisionSystem::checkPointInBounds(Vector3 point, const CollisionBounds& b
     }
 }
 
+BoundingBox CollisionSystem::boundsToBox(const CollisionBounds& bounds) {
+    BoundingBox box;
+    float halfWidth = bounds.size.x / 2.0f;
+    float halfHeight = bounds.size.y / 2.0f;
+    float halfDepth = bounds.size.z / 2.0f;
+
+    box.min.x = bounds.position.x - halfWidth;
+    box.min.y = bounds.position.y - halfHeight;
+    box.min.z = bounds.position.z - halfDepth;
+
+    box.max.x = bounds.position.x + halfWidth;
+    box.max.y = bounds.position.y + halfHeight;
+    box.max.z = bounds.position.z + halfDepth;
+
+    return box;
+}
+
 bool CollisionSystem::checkBoxCollision(const CollisionBounds& box1, const CollisionBounds& bounds2) {
     float halfWidth1 = box1.size.x / 2.0f;
     float halfHeight1 = box1.size.y / 2.0f;
@@ -58,9 +76,13 @@ bool CollisionSystem::checkBoxCollision(const CollisionBounds& box1, const Colli
             float minZ2 = bounds2.position.z - halfDepth2;
             float maxZ2 = bounds2.position.z + halfDepth2;
 
-            return (maxX1 >= minX2 && minX1 <= maxX2) &&
-                   (maxY1 >= minY2 && minY1 <= maxY2) &&
-                   (maxZ1 >= minZ2 && minZ1 <= maxZ2);
+            bool collision = (maxX1 >= minX2 && minX1 <= maxX2) &&
+                           (maxY1 >= minY2 && minY1 <= maxY2) &&
+                           (maxZ1 >= minZ2 && minZ1 <= maxZ2);
+
+
+
+            return collision;
         }
         case CollisionShape::SPHERE: {
             float closestX = std::max(minX1, std::min(bounds2.position.x, maxX1));
@@ -131,11 +153,17 @@ bool CollisionSystem::checkCylinderCollision(const CollisionBounds& cyl1, const 
             float dz = closestZ - cyl1.position.z;
             float dist2D = sqrtf(dx * dx + dz * dz);
 
-            if (dist2D > cyl1.size.x) return false;
+            bool withinRadius = dist2D <= cyl1.size.x;
+            if (!withinRadius) return false;
 
             float cylBottom = cyl1.position.y;
             float cylTop = cyl1.position.y + cyl1.size.y;
-            return (cylTop > minY && cylBottom < maxY);
+            bool withinHeight = (cylTop > minY && cylBottom < maxY);
+            bool collision = withinRadius && withinHeight;
+
+
+
+            return collision;
         }
         default:
             return false;
@@ -182,111 +210,167 @@ bool CollisionSystem::pointInCapsule(Vector3 point, const CollisionBounds& capsu
 }
 
 void CollisionSystem::resolveCollisions(Vector3& newPosition, const Vector3& originalPosition, float playerRadius, float playerHeight, float playerY, float eyeHeight, float groundLevel, const EnvironmentManager& environment, bool isInBuilding, int currentBuilding) {
-    int excludeIndex = isInBuilding ? currentBuilding : -1;
+    // **CRITICAL FIX**: Never exclude buildings from collision detection
+    // The building detection logic has race conditions that cause wall penetration
+    // Buildings should ALWAYS block movement until we fix the detection logic
+    int excludeIndex = -1;  // Never exclude any objects from collision
 
+    // **SIMPLIFIED FIX**: Use the camera position directly, adjust Y to ground level
+    // The newPosition.y is camera height (eye level), so player feet are at newPosition.y - eyeHeight
     Vector3 boundsPos = newPosition;
-    boundsPos.y = playerY;
+    boundsPos.y = newPosition.y - eyeHeight + (playerHeight / 2.0f);  // Center capsule on player body
+    
     CollisionBounds playerBounds = {
         CollisionShape::CAPSULE,
         boundsPos,
-        {playerRadius, playerHeight, 0.0f},
+        {playerRadius, playerHeight, playerRadius},  // CRITICAL FIX: Capsule needs radius in Z too!
         0.0f
     };
 
-    if (environment.checkCollision(playerBounds, excludeIndex)) {
-        Vector3 slidePosition = newPosition;
+    // Debug collision bounds occasionally 
+    static int boundsDebugCounter = 0;
+    boundsDebugCounter++;
+    if (boundsDebugCounter % 60 == 0) {
+        printf("COLLISION BOUNDS: Player at (%.1f, %.1f, %.1f), radius: %.1f, height: %.1f\n",
+               boundsPos.x, boundsPos.y, boundsPos.z, playerRadius, playerHeight);
+    }
+
+    // **SIMPLIFIED**: Disable door collision exception for now
+    // The door/building detection logic has race conditions
+    // Focus on making walls solid first, then re-enable door entry later
+    
+    // TODO: Re-implement door collision logic after fixing building detection race conditions
+
+    // **SIMPLIFIED**: Always check collision against all objects
+    bool wallCollision = environment.checkCollision(playerBounds, -1);  // Never exclude anything
+
+    if (wallCollision) {
+        // **IMPROVED**: Use more granular movement steps to prevent clipping through thin walls
         Vector3 movement = {
             newPosition.x - originalPosition.x,
             newPosition.y - originalPosition.y,
             newPosition.z - originalPosition.z
         };
 
-        const float WALL_SLIDE_THRESHOLD = 0.1f;
+        // **SIMPLIFIED**: Use fixed number of steps to avoid over-complication
+        const int maxSteps = 10;  // Keep it simple and reliable
+        
+        Vector3 testPosition = originalPosition;
+        bool foundValidPosition = false;
 
-        if (fabsf(movement.x) > WALL_SLIDE_THRESHOLD || fabsf(movement.z) > WALL_SLIDE_THRESHOLD) {
+        for (int step = 1; step <= maxSteps && !foundValidPosition; ++step) {
+            float t = (float)step / maxSteps;
+            testPosition.x = originalPosition.x + movement.x * t;
+            testPosition.y = originalPosition.y + movement.y * t;
+            testPosition.z = originalPosition.z + movement.z * t;
+
+            Vector3 testBoundsPos = testPosition;
+            testBoundsPos.y = testPosition.y - eyeHeight + (playerHeight / 2.0f);  // Fix Y coordinate
+            CollisionBounds testBounds = {
+                CollisionShape::CAPSULE,
+                testBoundsPos,
+                {playerRadius, playerHeight, playerRadius},  // Fix Z dimension
+                0.0f
+            };
+
+            if (!environment.checkCollision(testBounds, excludeIndex)) {
+                newPosition = testPosition;
+                foundValidPosition = true;
+            }
+        }
+
+        // **IMPROVED**: Enhanced wall sliding with better collision bounds
+        if (!foundValidPosition) {
+            // Try sliding along X axis (keep original Z and Y)
+            Vector3 slidePosition = originalPosition;
             slidePosition.x = newPosition.x;
-            slidePosition.z = originalPosition.z + (movement.z * 0.7f);
+            slidePosition.y = newPosition.y;  // Allow Y movement (jumping/falling)
+
             Vector3 slideBoundsPos = slidePosition;
-            slideBoundsPos.y = playerY;
+            slideBoundsPos.y = slidePosition.y - eyeHeight + (playerHeight / 2.0f);  // Fix Y coordinate
             CollisionBounds slideBounds = {
                 CollisionShape::CAPSULE,
                 slideBoundsPos,
-                {playerRadius, playerHeight, 0.0f},
+                {playerRadius, playerHeight, playerRadius},  // Fix Z dimension
                 0.0f
             };
+
             if (!environment.checkCollision(slideBounds, excludeIndex)) {
                 newPosition = slidePosition;
                 return;
             }
 
-            slidePosition = newPosition;
+            // Try sliding along Z axis (keep original X)
+            slidePosition = originalPosition;
             slidePosition.z = newPosition.z;
-            slidePosition.x = originalPosition.x + (movement.x * 0.7f);
+            slidePosition.y = newPosition.y;  // Allow Y movement
+
             slideBoundsPos = slidePosition;
-            slideBoundsPos.y = playerY;
+            slideBoundsPos.y = slidePosition.y - eyeHeight + (playerHeight / 2.0f);  // Fix Y coordinate
             slideBounds = {
                 CollisionShape::CAPSULE,
                 slideBoundsPos,
-                {playerRadius, playerHeight, 0.0f},
+                {playerRadius, playerHeight, playerRadius},  // Fix Z dimension
                 0.0f
             };
+
             if (!environment.checkCollision(slideBounds, excludeIndex)) {
                 newPosition = slidePosition;
                 return;
             }
 
-            slidePosition = newPosition;
-            slidePosition.x = originalPosition.x + (movement.x * 0.5f);
-            slidePosition.z = originalPosition.z + (movement.z * 0.5f);
+            // Try Y-only movement (for jumping/falling against walls)
+            slidePosition = originalPosition;
+            slidePosition.y = newPosition.y;
+
             slideBoundsPos = slidePosition;
-            slideBoundsPos.y = playerY;
+            slideBoundsPos.y = slidePosition.y - eyeHeight + (playerHeight / 2.0f);
             slideBounds = {
                 CollisionShape::CAPSULE,
                 slideBoundsPos,
-                {playerRadius, playerHeight, 0.0f},
+                {playerRadius, playerHeight, playerRadius},  // Fix Z dimension
                 0.0f
             };
+
             if (!environment.checkCollision(slideBounds, excludeIndex)) {
                 newPosition = slidePosition;
                 return;
             }
-        }
 
-        slidePosition = originalPosition;
-        slidePosition.x += movement.x * 0.3f;
-        slidePosition.z += movement.z * 0.3f;
-        Vector3 slideBoundsPos = slidePosition;
-        slideBoundsPos.y = playerY;
-        CollisionBounds slideBounds = {
-            CollisionShape::CAPSULE,
-            slideBoundsPos,
-            {playerRadius, playerHeight, 0.0f},
-            0.0f
-        };
-        if (!environment.checkCollision(slideBounds, excludeIndex)) {
-            newPosition = slidePosition;
-            return;
+            // If all else fails, don't move at all
+            newPosition = originalPosition;
+            printf("COLLISION: All movement blocked, staying at original position\n");
         }
-
-        newPosition = originalPosition;
     }
 
+    // Check NPC collisions (always block movement) with corrected Y coordinate
     Vector3 npcPos = newPosition;
-    npcPos.y = playerY;
+    npcPos.y = newPosition.y - eyeHeight + (playerHeight / 2.0f);  // Use consistent Y calculation
     if (checkNPCCollision(npcPos, playerRadius, playerHeight)) {
         newPosition = originalPosition;
     }
 
     if (isInBuilding) {
         auto objects = environment.getAllObjects();
-        if (currentBuilding >= 0 && currentBuilding < static_cast<int>(objects.size())) {
-            if (auto building = std::dynamic_pointer_cast<Building>(objects[currentBuilding])) {
-                Vector3 bSize = building->getSize();
-                Vector3 bPos = building->position;
+        // Find building by ID instead of array index
+        Building* currentBuildingPtr = nullptr;
+        for (const auto& obj : objects) {
+            if (auto building = std::dynamic_pointer_cast<Building>(obj)) {
+                if (building->getId() == currentBuilding) {
+                    currentBuildingPtr = building.get();
+                    break;
+                }
+            }
+        }
 
-                float halfW = bSize.x / 2.0f - playerRadius;
-                float halfH = bSize.y / 2.0f - 0.1f; // Slight headroom
-                float halfD = bSize.z / 2.0f - playerRadius;
+        if (currentBuildingPtr) {
+                Vector3 bSize = currentBuildingPtr->getSize();
+                Vector3 bPos = currentBuildingPtr->position;
+
+                // More generous bounds for interior movement
+                float halfW = bSize.x / 2.0f - playerRadius * 1.5f; // More space
+                float halfH = bSize.y / 2.0f - 0.5f; // More headroom
+                float halfD = bSize.z / 2.0f - playerRadius * 1.5f; // More space
 
                 float minX = bPos.x - halfW;
                 float maxX = bPos.x + halfW;
@@ -295,10 +379,53 @@ void CollisionSystem::resolveCollisions(Vector3& newPosition, const Vector3& ori
                 float minZ = bPos.z - halfD;
                 float maxZ = bPos.z + halfD;
 
+                // Clamp position but allow more freedom
                 newPosition.x = std::max(minX, std::min(maxX, newPosition.x));
                 newPosition.y = std::max(minY + eyeHeight, std::min(maxY, newPosition.y));
                 newPosition.z = std::max(minZ, std::min(maxZ, newPosition.z));
+
+                // Debug logging for building movement
+                static int frameCounter = 0;
+                frameCounter++;
+                if (frameCounter % 60 == 0) {
+                    printf("Building bounds: X[%.1f, %.1f] Z[%.1f, %.1f] | Player: (%.1f, %.1f, %.1f)\n",
+                           minX, maxX, minZ, maxZ, newPosition.x, newPosition.y, newPosition.z);
+                }
             }
         }
     }
+
+// Door-specific collision checking implementation
+bool CollisionSystem::checkDoorCollision(const CollisionBounds& playerBounds, const EnvironmentManager& environment, int& doorBuildingId) {
+    auto objects = environment.getAllObjects();
+
+
+
+    for (size_t i = 0; i < objects.size(); ++i) {
+        if (auto building = std::dynamic_pointer_cast<Building>(objects[i])) {
+            if (building->isInteractive()) {
+                CollisionBounds doorBounds = building->getDoorCollisionBounds();
+
+                if (checkCollision(playerBounds, doorBounds)) {
+                    doorBuildingId = building->getId();
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+bool CollisionSystem::canEnterBuilding(int buildingId, const EnvironmentManager& environment) {
+    auto objects = environment.getAllObjects();
+
+    for (const auto& obj : objects) {
+        if (auto building = std::dynamic_pointer_cast<Building>(obj)) {
+            if (building->getId() == buildingId && building->isInteractive()) {
+                return true;
+            }
+        }
+    }
+    return false;
 }

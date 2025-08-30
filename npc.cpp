@@ -17,9 +17,9 @@ void initNPCs() {
         .interactionRadius = 2.5f
     };
 
-    // Buster Shoppin in Shop Building
+    // Buster Shoppin in Shop Building (positioned inside the building)
     npcs[1] = {
-        .position = {12.0f, 0.0f, -5.0f},
+        .position = {12.0f, 0.0f, -2.0f},  // Inside shop building, facing the door
         .name = "Buster Shoppin",
         .dialog = "Welcome to my shop! I've got all sorts of goods and supplies for sale.",
         .color = GREEN,

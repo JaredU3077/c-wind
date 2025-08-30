@@ -4,63 +4,63 @@
 
 void initializeWorld(EnvironmentManager& environment) {
     // Create Mayor's Building (north side, blue, facing player spawn)
-    Building::DoorConfig mayorDoor;
+    DoorConfig mayorDoor;
     mayorDoor.offset = {0.0f, -2.5f, 4.0f};   // Door on north face (+Z)
     mayorDoor.width = 1.2f;
     mayorDoor.height = 2.8f;
     mayorDoor.rotation = 0.0f;
     mayorDoor.color = BROWN;
 
-    auto mayorBuilding = std::make_shared<Building>(
-        Vector3{0.0f, 2.5f, -12.0f},    // Building center
-        Vector3{10.0f, 5.0f, 8.0f},    // Size
-        BLUE,                           // Color
-        "Mayor's Building",             // Name
-        mayorDoor,                      // Door config
-        true                            // Can enter
-    );
+    BuildingConfig mayorConfig;
+    mayorConfig.id = 0;  // Unique ID for Mayor's Building
+    mayorConfig.size = {10.0f, 5.0f, 8.0f};
+    mayorConfig.color = BLUE;
+    mayorConfig.name = "Mayor's Building";
+    mayorConfig.door = mayorDoor;
+    mayorConfig.canEnter = true;
+
+    auto mayorBuilding = EnvironmentalObjectFactory::createBuilding(mayorConfig, Vector3{0.0f, 2.5f, -12.0f});
     environment.addObject(mayorBuilding);
 
     // Create Shop Keeper's Building (east side, red, facing player spawn)
-    Building::DoorConfig shopDoor;
+    DoorConfig shopDoor;
     shopDoor.offset = {4.0f, -2.5f, 0.0f};    // Door on east face (+X)
     shopDoor.width = 1.2f;
     shopDoor.height = 2.8f;
     shopDoor.rotation = 90.0f; // Rotate to align properly
     shopDoor.color = BROWN;
 
-    auto shopBuilding = std::make_shared<Building>(
-        Vector3{12.0f, 2.5f, 0.0f},     // Building center (consistent height)
-        Vector3{8.0f, 5.0f, 6.0f},      // Size (consistent height)
-        RED,                            // Color
-        "Shop Keeper's Building",       // Name
-        shopDoor,                       // Door config
-        true                            // Can enter
-    );
+    BuildingConfig shopConfig;
+    shopConfig.id = 1;  // Unique ID for Shop Building
+    shopConfig.size = {8.0f, 5.0f, 6.0f};
+    shopConfig.color = RED;
+    shopConfig.name = "Shop Keeper's Building";
+    shopConfig.door = shopDoor;
+    shopConfig.canEnter = true;
+
+    auto shopBuilding = EnvironmentalObjectFactory::createBuilding(shopConfig, Vector3{12.0f, 2.5f, 0.0f});
     environment.addObject(shopBuilding);
 
     // Add central well
-    auto well = std::make_shared<Well>(
-        Vector3{0.0f, 0.0f, 0.0f},  // Position
-        1.5f,                       // Base radius
-        2.5f                        // Height
-    );
+    WellConfig wellConfig;
+    wellConfig.baseRadius = 1.5f;
+    wellConfig.height = 2.5f;
+
+    auto well = EnvironmentalObjectFactory::createWell(wellConfig, Vector3{0.0f, 0.0f, 0.0f});
     environment.addObject(well);
 
     // Add decorative trees
-    auto tree1 = std::make_shared<Tree>(
-        Vector3{-15.0f, 0.0f, -10.0f},  // Position
-        0.5f,                           // Trunk radius
-        4.0f,                           // Trunk height
-        2.5f                            // Foliage radius
-    );
+    TreeConfig treeConfig;
+    treeConfig.trunkRadius = 0.5f;
+    treeConfig.trunkHeight = 4.0f;
+    treeConfig.foliageRadius = 2.5f;
+
+    auto tree1 = EnvironmentalObjectFactory::createTree(treeConfig, Vector3{-15.0f, 0.0f, -10.0f});
     environment.addObject(tree1);
 
-    auto tree2 = std::make_shared<Tree>(
-        Vector3{15.0f, 0.0f, -10.0f},   // Position
-        0.5f,                           // Trunk radius
-        4.0f,                           // Trunk height
-        2.5f                            // Foliage radius
-    );
+    auto tree2 = EnvironmentalObjectFactory::createTree(treeConfig, Vector3{15.0f, 0.0f, -10.0f});
     environment.addObject(tree2);
+
+    // Rebuild spatial grid with all objects for proper collision detection
+    environment.rebuildSpatialGrid();
 }

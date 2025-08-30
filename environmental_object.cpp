@@ -1,125 +1,218 @@
-// environmental_object.cpp
+// environmental_object.cpp (updated)
 #include "environmental_object.h"
 #include "collision_system.h"  // For CollisionBounds and CollisionShape
 #include "rlgl.h"             // For rlPushMatrix, rlTranslatef, rlRotatef, rlPopMatrix
 #include <cmath>
 
-Building::Building(Vector3 pos, Vector3 size, Color color, const std::string& name,
-                   const DoorConfig& door, bool canEnter)
-    : size(size), color(color), name(name), doorConfig(door), canEnter(canEnter) {
-    position = pos;
+void EnvironmentalObject::addComponent(std::unique_ptr<Component> component) {
+    components_[component->getTypeName()] = std::move(component);
 }
 
-void Building::render() {
-    // Draw main building
-    DrawCube(position, size.x, size.y, size.z, color);
-    DrawCubeWires(position, size.x, size.y, size.z, BLACK);
+Component* EnvironmentalObject::getComponent(const std::string& typeName) const {
+    auto it = components_.find(typeName);
+    return (it != components_.end()) ? it->second.get() : nullptr;
+}
 
-    // Draw roof
-    Vector3 roofPos = {position.x, position.y + size.y/2 + 0.5f, position.z};
-    DrawCube(roofPos, size.x + 1.0f, 1.0f, size.z + 1.0f, DARKGRAY);
+void EnvironmentalObject::update(float deltaTime) {
+    for (auto& pair : components_) {
+        pair.second->update(deltaTime);
+    }
+}
 
-    // Draw properly mounted door with rotation support
-    Vector3 doorPos = {
-        position.x + doorConfig.offset.x,
-        position.y + doorConfig.offset.y,
-        position.z + doorConfig.offset.z
-    };
+void EnvironmentalObject::render(const Camera3D& camera) {
+    if (auto renderComp = dynamic_cast<RenderComponent*>(getComponent("RenderComponent"))) {
+        // Apply position transformation before rendering
+        rlPushMatrix();
+        rlTranslatef(position.x, position.y, position.z);
+        renderComp->render(camera);
+        rlPopMatrix();
+    }
+}
 
+CollisionBounds EnvironmentalObject::getCollisionBounds() const {
+    if (auto physicsComp = dynamic_cast<PhysicsComponent*>(getComponent("PhysicsComponent"))) {
+        CollisionBounds bounds = physicsComp->getBounds();
+        // Convert relative bounds to world coordinates
+        bounds.position.x += position.x;
+        bounds.position.y += position.y;
+        bounds.position.z += position.z;
+        return bounds;
+    }
+    return CollisionBounds{}; // Return default bounds if no physics component
+}
+
+template<typename T>
+std::unique_ptr<T> ObjectPool<T>::acquire() {
+    std::lock_guard<std::mutex> lock(poolMutex_);
+    if (!pool_.empty()) {
+        std::unique_ptr<T> obj = std::move(pool_.back());
+        pool_.pop_back();
+        return obj;
+    }
+    return std::make_unique<T>();
+}
+
+template<typename T>
+void ObjectPool<T>::release(std::unique_ptr<T> object) {
+    std::lock_guard<std::mutex> lock(poolMutex_);
+    pool_.push_back(std::move(object));
+}
+
+// Explicit instantiations if needed (e.g., for Building, Well, Tree)
+// template class ObjectPool<Building>;
+// template class ObjectPool<Well>;
+// template class ObjectPool<Tree>;
+
+// Factory implementations
+std::shared_ptr<EnvironmentalObject> EnvironmentalObjectFactory::createBuilding(const BuildingConfig& config, Vector3 pos) {
+    return std::make_shared<Building>(pos, config);
+}
+
+std::shared_ptr<EnvironmentalObject> EnvironmentalObjectFactory::createWell(const WellConfig& config, Vector3 pos) {
+    return std::make_shared<Well>(pos, config);
+}
+
+std::shared_ptr<EnvironmentalObject> EnvironmentalObjectFactory::createTree(const TreeConfig& config, Vector3 pos) {
+    return std::make_shared<Tree>(pos, config);
+}
+
+// Building Components
+BuildingRenderComponent::BuildingRenderComponent(const BuildingConfig& config) : config_(config) {}
+
+void BuildingRenderComponent::render(const Camera3D& camera) {
+    // Draw main building (position is from owner)
+    DrawCube({0,0,0}, config_.size.x, config_.size.y, config_.size.z, config_.color);  // Relative to position
+    DrawCubeWires({0,0,0}, config_.size.x, config_.size.y, config_.size.z, BLACK);
+
+    // Roof
+    Vector3 roofPos = {0, config_.size.y/2 + 0.5f, 0};
+    DrawCube(roofPos, config_.size.x + 1.0f, 1.0f, config_.size.z + 1.0f, DARKGRAY);
+
+    // Door
+    Vector3 doorPos = config_.door.offset;
     rlPushMatrix();
-    rlTranslatef(doorPos.x, doorPos.y + doorConfig.height / 2.0f, doorPos.z); // Center for rotation
-    rlRotatef(doorConfig.rotation, 0.0f, 1.0f, 0.0f);
-    DrawCube({0, 0, 0}, doorConfig.width, doorConfig.height, 0.2f, doorConfig.color);
-    DrawCubeWires({0, 0, 0}, doorConfig.width, doorConfig.height, 0.2f, BLACK);
+    rlTranslatef(doorPos.x, doorPos.y + config_.door.height / 2.0f, doorPos.z);
+    rlRotatef(config_.door.rotation, 0.0f, 1.0f, 0.0f);
+    DrawCube({0, 0, 0}, config_.door.width, config_.door.height, 0.2f, config_.door.color);
+    DrawCubeWires({0, 0, 0}, config_.door.width, config_.door.height, 0.2f, BLACK);
     rlPopMatrix();
 
-    // Draw door handle (adjusted for rotation)
-    float handleX = cosf(doorConfig.rotation * DEG2RAD) * 0.4f;
-    float handleZ = sinf(doorConfig.rotation * DEG2RAD) * 0.4f;
-    Vector3 handlePos = {
-        doorPos.x + handleX,
-        doorPos.y + 1.0f,
-        doorPos.z + handleZ
-    };
+    // Handle
+    float handleX = cosf(config_.door.rotation * DEG2RAD) * 0.4f;
+    float handleZ = sinf(config_.door.rotation * DEG2RAD) * 0.4f;
+    Vector3 handlePos = {doorPos.x + handleX, doorPos.y + 1.0f, doorPos.z + handleZ};
     DrawSphere(handlePos, 0.08f, GOLD);
 
-    // Draw building sign (rotated if necessary)
+    // Sign
     Vector3 signPos = {doorPos.x, doorPos.y + 2.2f, doorPos.z};
     rlPushMatrix();
     rlTranslatef(signPos.x, signPos.y, signPos.z);
-    rlRotatef(doorConfig.rotation, 0.0f, 1.0f, 0.0f);
+    rlRotatef(config_.door.rotation, 0.0f, 1.0f, 0.0f);
     DrawCube({0, 0, 0}, 1.5f, 0.3f, 0.05f, LIGHTGRAY);
     rlPopMatrix();
 }
 
-CollisionBounds Building::getCollisionBounds() const {
+BuildingPhysicsComponent::BuildingPhysicsComponent(const Vector3& size) : size_(size) {}
+
+CollisionBounds BuildingPhysicsComponent::getBounds() const {
     return {
         CollisionShape::BOX,
-        position,
-        {size.x, size.y, size.z},
+        {0, 0, 0},  // Position will be transformed by EnvironmentalObject::getCollisionBounds()
+        {size_.x, size_.y, size_.z},
         0.0f
     };
 }
 
+Building::Building(Vector3 pos, const BuildingConfig& config) : config_(config) {
+    position = pos;
+    collidable = true;  // Ensure collision is enabled for buildings
+    addComponent(std::make_unique<BuildingRenderComponent>(config));
+    addComponent(std::make_unique<BuildingPhysicsComponent>(config.size));
+}
+
 Vector3 Building::getDoorPosition() const {
-    return {
-        position.x + doorConfig.offset.x,
-        position.y + doorConfig.offset.y,
-        position.z + doorConfig.offset.z
-    };
+    return Vector3{position.x + config_.door.offset.x, position.y + config_.door.offset.y, position.z + config_.door.offset.z};
 }
 
 bool Building::isPlayerAtDoor(Vector3 playerPos, float threshold) const {
     Vector3 doorPos = getDoorPosition();
-    float distance = sqrtf(
-        (playerPos.x - doorPos.x) * (playerPos.x - doorPos.x) +
-        (playerPos.y - doorPos.y) * (playerPos.y - doorPos.y) +
-        (playerPos.z - doorPos.z) * (playerPos.z - doorPos.z)
-    );
+    Vector3 diff = {playerPos.x - doorPos.x, playerPos.y - doorPos.y, playerPos.z - doorPos.z};
+    float distance = sqrtf(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z);
     return distance <= threshold;
 }
 
-Well::Well(Vector3 pos, float baseRadius, float height)
-    : baseRadius(baseRadius), height(height) {
-    position = pos;
-}
-
-void Well::render() {
-    Vector3 wellBase = position;
-    Vector3 wellTop = {position.x, position.y + height, position.z};
-
-    DrawCylinder(wellBase, baseRadius, baseRadius, 0.5f, 16, DARKGRAY);
-    DrawCylinder(wellBase, baseRadius * 0.8f, baseRadius * 0.8f, height, 16, GRAY);
-    DrawCylinder(wellTop, baseRadius * 0.9f, baseRadius * 0.7f, 0.2f, 16, DARKGRAY);
-    DrawCylinder({position.x, position.y + height + 0.5f, position.z}, 0.1f, 0.1f, 1.0f, 8, BROWN);
-    DrawSphere({position.x, position.y + height + 1.5f, position.z}, 0.15f, GRAY);
-}
-
-CollisionBounds Well::getCollisionBounds() const {
+CollisionBounds Building::getDoorCollisionBounds() const {
+    Vector3 doorPos = getDoorPosition();
+    // Removed excessive debug logging
     return {
-        CollisionShape::CYLINDER,
+        CollisionShape::BOX,
+        doorPos,
+        {config_.door.width, config_.door.height, 0.2f},  // Slightly thicker door for better collision
+        config_.door.rotation
+    };
+}
+
+CollisionBounds Building::getWallCollisionBounds() const {
+    // Return the building bounds excluding the door area
+    return {
+        CollisionShape::BOX,
         position,
-        {baseRadius, height, 0.0f},
+        config_.size,
         0.0f
     };
 }
 
-Tree::Tree(Vector3 pos, float trunkRadius, float trunkHeight, float foliageRadius)
-    : trunkRadius(trunkRadius), trunkHeight(trunkHeight), foliageRadius(foliageRadius) {
-    position = pos;
+// Well Components
+WellRenderComponent::WellRenderComponent(const WellConfig& config) : config_(config) {}
+
+void WellRenderComponent::render(const Camera3D& camera) {
+    DrawCylinder({0,0,0}, config_.baseRadius, config_.baseRadius, 0.5f, 16, DARKGRAY);
+    DrawCylinder({0,0,0}, config_.baseRadius * 0.8f, config_.baseRadius * 0.8f, config_.height, 16, GRAY);
+    DrawCylinder({0, config_.height, 0}, config_.baseRadius * 0.9f, config_.baseRadius * 0.7f, 0.2f, 16, DARKGRAY);
+    DrawCylinder({0, config_.height + 0.5f, 0}, 0.1f, 0.1f, 1.0f, 8, BROWN);
+    DrawSphere({0, config_.height + 1.5f, 0}, 0.15f, GRAY);
 }
 
-void Tree::render() {
-    DrawCylinder(position, trunkRadius, trunkRadius, trunkHeight, 8, DARKBROWN);
-    Vector3 foliagePos = {position.x, position.y + trunkHeight, position.z};
-    DrawSphere(foliagePos, foliageRadius, GREEN);
-}
+WellPhysicsComponent::WellPhysicsComponent(float baseRadius, float height) : baseRadius_(baseRadius), height_(height) {}
 
-CollisionBounds Tree::getCollisionBounds() const {
+CollisionBounds WellPhysicsComponent::getBounds() const {
     return {
         CollisionShape::CYLINDER,
-        position,
-        {trunkRadius, trunkHeight, 0.0f},
+        {0,0,0},
+        {baseRadius_, height_, 0.0f},
         0.0f
     };
+}
+
+Well::Well(Vector3 pos, const WellConfig& config) : config_(config) {
+    position = pos;
+    collidable = true;  // Ensure collision is enabled for the well
+    addComponent(std::make_unique<WellRenderComponent>(config));
+    addComponent(std::make_unique<WellPhysicsComponent>(config.baseRadius, config.height));
+}
+
+// Tree Components
+TreeRenderComponent::TreeRenderComponent(const TreeConfig& config) : config_(config) {}
+
+void TreeRenderComponent::render(const Camera3D& camera) {
+    DrawCylinder({0,0,0}, config_.trunkRadius, config_.trunkRadius, config_.trunkHeight, 8, DARKBROWN);
+    DrawSphere({0, config_.trunkHeight, 0}, config_.foliageRadius, GREEN);
+}
+
+TreePhysicsComponent::TreePhysicsComponent(float trunkRadius, float trunkHeight) : trunkRadius_(trunkRadius), trunkHeight_(trunkHeight) {}
+
+CollisionBounds TreePhysicsComponent::getBounds() const {
+    return {
+        CollisionShape::CYLINDER,
+        {0,0,0},
+        {trunkRadius_, trunkHeight_, 0.0f},
+        0.0f
+    };
+}
+
+Tree::Tree(Vector3 pos, const TreeConfig& config) : config_(config) {
+    position = pos;
+    collidable = true;  // Ensure collision is enabled for trees
+    addComponent(std::make_unique<TreeRenderComponent>(config));
+    addComponent(std::make_unique<TreePhysicsComponent>(config.trunkRadius, config.trunkHeight));
 }

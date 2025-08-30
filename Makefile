@@ -2,7 +2,7 @@
 
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -Wextra -O2 -I/opt/homebrew/opt/raylib/include
+CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -I/opt/homebrew/opt/raylib/include
 LDFLAGS = -L/opt/homebrew/opt/raylib/lib -lraylib -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
 
 # For Windows (uncomment if building on Windows)
@@ -12,7 +12,7 @@ LDFLAGS = -L/opt/homebrew/opt/raylib/lib -lraylib -framework OpenGL -framework C
 # LDFLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 
 # Source files (using main.cpp with modular architecture)
-SRC = main.cpp collision_system.cpp combat.cpp dialog_system.cpp environment_manager.cpp environmental_object.cpp game_state.cpp interaction_system.cpp npc.cpp player_system.cpp render_utils.cpp testing_system.cpp world_builder.cpp
+SRC = main.cpp collision_system.cpp combat.cpp dialog_system.cpp environment_manager.cpp environmental_object.cpp game_state.cpp interaction_system.cpp inventory.cpp npc.cpp player_system.cpp render_utils.cpp testing_system.cpp world_builder.cpp config.cpp input_manager.cpp performance.cpp
 OBJ = $(SRC:.cpp=.o)
 TARGET = Browserwind
 
@@ -40,7 +40,7 @@ test: test_runner
 	./test_runner
 
 # Build test runner
-test_runner: tests/main_test_runner.cpp tests/camera_tests.cpp tests/rendering_tests.cpp tests/performance_tests.cpp tests/input_tests.cpp
+test_runner: tests/main_test_runner.cpp tests/camera_tests.cpp tests/rendering_tests.cpp tests/performance_tests.cpp tests/input_tests.cpp tests/inventory_tests.cpp inventory.o
 	$(CXX) $(CXXFLAGS) $^ -o test_runner $(LDFLAGS)
 
 # Run full validation (build game, run tests, clean up)

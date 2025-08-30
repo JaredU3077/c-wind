@@ -16,6 +16,9 @@ void renderUI(Camera3D camera, float currentTime, const GameState& state, bool t
 void renderTestingPanel(const GameState& state, const std::string& locationText, Color locationColor);
 void renderGameStats(const GameState& state);
 void renderDialogWindow(const GameState& state);
+void renderInventoryUI(const GameState& state);
+void renderPlayerStatsUI(const GameState& state);
+void renderEscMenu(GameState& state);
 void printFinalSummary(const GameState& state);
 
 #endif

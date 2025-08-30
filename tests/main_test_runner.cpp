@@ -6,6 +6,7 @@ void registerCameraTests();
 void registerRenderingTests();
 void registerPerformanceTests();
 void registerInputTests();
+void registerInventoryTests();
 
 // Integration tests that combine multiple components
 bool testGameIntegration() {
@@ -125,6 +126,7 @@ int main() {
     registerRenderingTests();
     registerPerformanceTests();
     registerInputTests();
+    registerInventoryTests();  // Register inventory tests
     registerIntegrationTests();
 
     // Run all tests

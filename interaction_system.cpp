@@ -65,19 +65,27 @@ void handleInteractions(Camera3D& camera, EnvironmentManager& environment, GameS
                         interactableName = "Press E to enter " + building->getName();
                         if (eKeyPressed) {
                             state.isInBuilding = true;
-                            state.currentBuilding = static_cast<int>(i);
+                            state.currentBuilding = building->getId();  // Use building ID instead of array index
                             state.lastOutdoorPosition = camera.position;
-                            camera.position = {building->position.x, 1.75f, building->position.z + 2.0f};
-                            camera.target = {building->position.x, 1.55f, building->position.z - 2.0f}; // Look toward NPC
+
+                            // Set position more centered in the building interior
+                            Vector3 bSize = building->getSize();
+                            camera.position = {building->position.x, 1.75f, building->position.z};
+                            camera.target = {building->position.x, 1.55f, building->position.z - 3.0f}; // Look toward back of building
                             state.playerY = 0.0f;
                             state.testBuildingEntry = true;
+
+                            printf("Entered building: %s (ID: %d) at position (%.1f, %.1f, %.1f)\n",
+                                   building->getName().c_str(), building->getId(),
+                                   camera.position.x, camera.position.y, camera.position.z);
                             break;
                         }
-                    } else if (state.isInBuilding && state.currentBuilding == static_cast<int>(i) && eKeyPressed) {
+                    } else if (state.isInBuilding && state.currentBuilding == building->getId() && eKeyPressed) {
                         state.isInBuilding = false;
                         camera.position = state.lastOutdoorPosition;
                         camera.target = {state.lastOutdoorPosition.x, state.lastOutdoorPosition.y - 0.2f, state.lastOutdoorPosition.z - 5.0f};
                         state.currentBuilding = -1;
+                        printf("Exited building: %s\n", building->getName().c_str());
                         break;
                     }
                 }
