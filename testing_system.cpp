@@ -8,11 +8,13 @@ void handleTesting(Camera3D camera, const EnvironmentManager& environment, GameS
         state.testMouseCaptured = true;
     }
 
-    if (IsKeyDown(KEY_W) || IsKeyDown(KEY_A) || IsKeyDown(KEY_S) || IsKeyDown(KEY_D)) {
+    // **PHASE 2 ENHANCEMENT**: Testing input using enhanced input manager
+    if (state.enhancedInput.isActionDown("move_forward") || state.enhancedInput.isActionDown("strafe_left") || 
+        state.enhancedInput.isActionDown("move_backward") || state.enhancedInput.isActionDown("strafe_right")) {
         state.testWASDMovement = true;
     }
 
-    if (IsKeyPressed(KEY_SPACE)) {
+    if (state.enhancedInput.isActionPressed("jump")) {
         state.testSpaceJump = true;
     }
 

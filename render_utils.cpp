@@ -304,7 +304,7 @@ void renderInventoryUI(const GameState& state) {
     DrawRectangleLines(invX, invY, invWidth, invHeight, GOLD);
     
     // Title
-    DrawText("🎒 ADVENTURER'S INVENTORY", invX + 20, invY + 10, 18, GOLD);
+    DrawText("🎒 ADVENTURER'S INVENTORY [ID:7]", invX + 20, invY + 10, 18, GOLD);
     
     // Weight and slots info
     auto& inventory = state.inventorySystem->getInventory();
@@ -584,7 +584,7 @@ void renderEscMenu(GameState& state) {  // **NON-CONST** to update selectedMenuO
     DrawRectangleLines(menuX, menuY, menuWidth, menuHeight, SKYBLUE);
     
     // **TITLE**
-    DrawText("= BROWSERWIND PAUSED =", menuX + 80, menuY + 20, 20, SKYBLUE);
+    DrawText("= BROWSERWIND PAUSED = [ID:8]", menuX + 80, menuY + 20, 20, SKYBLUE);
     
     // **MENU OPTIONS WITH MOUSE HOVER DETECTION**
     const char* menuOptions[] = {"Resume Game", "Save Game", "Load Game", "Quit Game"};

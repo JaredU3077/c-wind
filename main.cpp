@@ -15,6 +15,8 @@
 #include "config.h"  
 #include "errors.h"  
 #include "input_manager.h"  
+#include "performance.h"  
+#include "ui_system.h"  // **UI SYSTEM** - Organized UI management
 
 #include <iostream>
 #include <vector>
@@ -175,6 +177,14 @@ int main(void)
 
         std::cout << "All systems initialized successfully!" << std::endl;
 
+        // **ENHANCED PERFORMANCE MONITORING** - Initialize advanced frame tracking
+        AdvancedFrameStats performanceStats;
+        std::cout << "Performance monitoring system initialized" << std::endl;
+        
+        // **UI SYSTEM**: Initialize organized UI management
+        initializeUISystem();
+        std::cout << "UI system initialized successfully" << std::endl;
+
         // Main game loop with custom ESC handling
         bool shouldClose = false;
         static float lastEscPressTime = -10.0f; // Static variable for double-ESC detection
@@ -195,6 +205,9 @@ int main(void)
                 std::cout << "Game loop iteration: " << frameCounter << ", Window ready: " << IsWindowReady() << std::endl;
             }
             float deltaTime = GetFrameTime();
+            
+            // **PHASE 1 ENHANCEMENT**: Advanced performance tracking
+            updateAdvancedFrameStats(performanceStats, deltaTime);
 
             // New: Update performance metrics in state
             state.metrics.totalFrames++;
@@ -203,34 +216,39 @@ int main(void)
             if (state.metrics.frameTimeHistory.size() > 100) {
                 state.metrics.frameTimeHistory.erase(state.metrics.frameTimeHistory.begin());
             }
-            state.notifyChange("metrics");  // Notify on update
+            // **TEMP DEBUG**: Disable all state change notifications to prevent crashes
+            // state.notifyChange("metrics");  // Notify on update
 
             // ===== PHASE 4: RE-ENABLE ENVIRONMENTAL UPDATES =====
             frameCounter++;
+            // **PROFILED**: Environment and collision updates
+            {
+                PROFILE_SYSTEM(performanceStats, collision);
             environment.update(GetFrameTime(), camera);
+            }
 
             // ===== PHASE 5: CLEAN INPUT SYSTEM =====
-            // **COMPREHENSIVE ESC MENU SYSTEM** - Handle all ESC scenarios properly
-            if (IsKeyPressed(KEY_ESCAPE)) {
+            // **PHASE 2 ENHANCEMENT**: ESC menu system using enhanced input
+            if (state.enhancedInput.isActionPressed("pause")) {
                 std::cout << "DEBUG: ESC key detected! Current states - Inventory: " << state.showInventoryWindow 
                           << ", EscMenu: " << state.showEscMenu << std::endl;
                 
                 if (state.showInventoryWindow) {
                     // **CLOSE INVENTORY** if open, like pressing I again
                     state.showInventoryWindow = false;
-                    input.setMouseCaptured(true);
+                    state.enhancedInput.setMouseCaptured(true);  // **PHASE 2**: Use enhanced input
                     state.mouseReleased = false;
                     std::cout << "ESC - Inventory closed, returning to game" << std::endl;
                 } else if (state.showEscMenu) {
                     // **CLOSE ESC MENU** if open, resume game
                     state.showEscMenu = false;
-                    input.setMouseCaptured(true);
+                    state.enhancedInput.setMouseCaptured(true);  // **PHASE 2**: Use enhanced input
                     state.mouseReleased = false;
                     std::cout << "ESC - Menu closed, resuming game" << std::endl;
                 } else {
                     // **OPEN ESC MENU** - pause game and show options
                     state.showEscMenu = true;
-                    input.setMouseCaptured(false);
+                    state.enhancedInput.setMouseCaptured(false);  // **PHASE 2**: Use enhanced input
                     state.mouseReleased = true;
                     state.selectedMenuOption = 0;  // Reset to "Resume"
                     std::cout << "ESC - Pause menu opened! Mouse freed for clicking." << std::endl;
@@ -241,50 +259,86 @@ int main(void)
             }
 
             // **WINDOW CLOSE CHECK** - Only X button or Alt+F4 (ESC disabled in raylib)
-            if (WindowShouldClose()) {
+            // **CRITICAL FIX**: Prevent infinite loop by only handling first close request
+            static bool windowCloseRequested = false;
+            if (WindowShouldClose() && !windowCloseRequested && !state.showEscMenu) {
                 // Window X button clicked - show pause menu with Quit highlighted
                 std::cout << "Window close requested - opening pause menu..." << std::endl;
+                windowCloseRequested = true;  // **PREVENT REPEATED TRIGGERS**
                 state.showEscMenu = true;
-                input.setMouseCaptured(false);
+                state.enhancedInput.setMouseCaptured(false);  // **PHASE 2**: Use enhanced input
                 state.mouseReleased = true;
                 state.selectedMenuOption = 3;  // Highlight "Quit Game" option
+            }
+            
+            // **RESET CLOSE FLAG** when menu is closed
+            if (!state.showEscMenu) {
+                windowCloseRequested = false;
             }
 
             // NOTE: Camera controls are now handled by updatePlayer() function
             // which uses Raylib's proper CAMERA_FIRST_PERSON system
 
-            // ===== PHASE 6: RE-ENABLE COMBAT MECHANICS =====
-            // Update input manager first
-            input.update();
+            // **TAB TOGGLE** - Testing panel
+            static bool lastTabState = false;
+            bool currentTabState = state.enhancedInput.isActionPressed("testing_panel");
 
-            // Melee combat mechanics (longsword) - disabled during dialog or inventory
-            if (!state.isInDialog && !state.showInventoryWindow && !state.showEscMenu && input.isMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+            if (currentTabState && !lastTabState) {
+                state.showTestingPanel = !state.showTestingPanel;
+                std::cout << "TAB PRESSED: Testing panel: " << (state.showTestingPanel ? "OPENED" : "CLOSED") << std::endl;
+            }
+            lastTabState = currentTabState;
+
+            // **DEBUG**: Check if TAB key is being detected at all
+            if (IsKeyPressed(KEY_TAB)) {
+                std::cout << "RAW TAB KEY DETECTED!" << std::endl;
+            }
+
+            // **PHASE 2 ENHANCEMENT**: Performance profiling controls using enhanced input
+            if (!state.isInDialog && !state.showEscMenu && !state.showInventoryWindow && 
+                state.enhancedInput.isActionPressed("performance_toggle")) {
+                performanceStats.showDetailedStats = !performanceStats.showDetailedStats;
+                std::cout << "Performance detailed stats: " << (performanceStats.showDetailedStats ? "ENABLED" : "DISABLED") << std::endl;
+            }
+
+            // ===== PHASE 6: RE-ENABLE COMBAT MECHANICS =====
+            // **PHASE 2 ENHANCEMENT**: Update enhanced input manager with delta time
+            {
+                PROFILE_SYSTEM(performanceStats, input);
+                input.update();  // Keep legacy for compatibility
+                state.enhancedInput.update(deltaTime);  // Enhanced system with caching
+            }
+
+            // **PHASE 2 ENHANCEMENT**: Melee combat using enhanced input with debouncing
+            if (!state.isInDialog && !state.showInventoryWindow && !state.showEscMenu && 
+                state.enhancedInput.isMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
                 (GetTime() - state.lastSwingTime) > state.swingCooldown) {
                 updateMeleeSwing(camera, GetTime(), state);
-                state.notifyChange("lastSwingTime");  // New: Example notify
+                // **TEMP DEBUG**: Disable state change notification to isolate segfault
+                // state.notifyChange("lastSwingTime");  // New: Example notify
             }
             
             // Inventory system controls - disabled during dialog or ESC menu
             if (!state.isInDialog && !state.showEscMenu && state.inventorySystem) {
-                // Toggle inventory UI window with 'I' key - **AUTO-HANDLE MOUSE STATE**
-                if (IsKeyPressed(KEY_I)) {
+                // **PHASE 2 ENHANCEMENT**: Inventory toggle using enhanced input with action binding
+                if (state.enhancedInput.isActionPressed("inventory")) {
                     state.showInventoryWindow = !state.showInventoryWindow;
                     
                     if (state.showInventoryWindow) {
-                        // **OPENING INVENTORY**: Auto-free mouse for UI interaction
-                        input.setMouseCaptured(false);
+                        // **PHASE 2**: Opening inventory - use enhanced input manager
+                        state.enhancedInput.setMouseCaptured(false);
                         state.mouseReleased = true;
                         std::cout << "Inventory opened - mouse automatically freed for interaction" << std::endl;
                     } else {
-                        // **CLOSING INVENTORY**: Auto-capture mouse for gameplay
-                        input.setMouseCaptured(true);
+                        // **PHASE 2**: Closing inventory - use enhanced input manager  
+                        state.enhancedInput.setMouseCaptured(true);
                         state.mouseReleased = false;
                         std::cout << "Inventory closed - mouse automatically captured for gameplay" << std::endl;
                     }
                 }
                 
-                // **INVENTORY MOUSE INTERACTIONS** - Handle item clicks when mouse is free
-                if (state.showInventoryWindow && !input.isMouseCaptured()) {
+                // **PHASE 2 ENHANCEMENT**: Inventory mouse interactions using enhanced input
+                if (state.showInventoryWindow && !state.enhancedInput.isMouseCaptured()) {
                     Vector2 mousePos = GetMousePosition();
                     int screenWidth = GetScreenWidth();
                     int screenHeight = GetScreenHeight();
@@ -337,8 +391,8 @@ int main(void)
                     }
                 }
                 
-                // Quick item usage with number keys (1-5 for consumables)
-                if (IsKeyPressed(KEY_ONE)) {
+                // **PHASE 2 ENHANCEMENT**: Quick item usage using enhanced input
+                if (state.enhancedInput.isActionPressed("quick_use")) {
                     auto consumables = state.inventorySystem->getInventory().findItemsByType(ItemType::CONSUMABLE);
                     if (!consumables.empty()) {
                         std::cout << "Used " << consumables[0]->getName() << std::endl;
@@ -357,8 +411,8 @@ int main(void)
                 }
             }
             
-            // **ESC MENU INTERACTIONS** - Handle menu clicks when mouse is free
-            if (state.showEscMenu && !input.isMouseCaptured()) {
+            // **PHASE 2 FIX**: ESC menu interactions using enhanced input manager
+            if (state.showEscMenu && !state.enhancedInput.isMouseCaptured()) {
                 Vector2 mousePos = GetMousePosition();
                 int screenWidth = GetScreenWidth();
                 int screenHeight = GetScreenHeight();
@@ -369,7 +423,7 @@ int main(void)
                 int optionY = menuY + 80;
                 int optionSpacing = 50;
                 
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                if (state.enhancedInput.isMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                     // Check which menu option was clicked
                     for (int i = 0; i < 4; i++) {
                         int buttonY = optionY + i * optionSpacing - 5;
@@ -382,7 +436,7 @@ int main(void)
                             switch (i) {
                                 case 0: // Resume Game
                                     state.showEscMenu = false;
-                                    input.setMouseCaptured(true);
+                                    state.enhancedInput.setMouseCaptured(true);  // **PHASE 2**: Use enhanced input
                                     state.mouseReleased = false;
                                     std::cout << "Resuming game..." << std::endl;
                                     break;
@@ -419,18 +473,22 @@ int main(void)
             // Update targets (respawn after being hit)
             updateTargets();
 
-            // Update player (jumping, movement, collisions) - **DISABLED DURING ESC MENU**
+            // **PROFILED**: Update player (jumping, movement, collisions) - **DISABLED DURING ESC MENU**
             if (!state.showEscMenu) {
-                updatePlayer(camera, state, environment, GetFrameTime());
+                PROFILE_SYSTEM(performanceStats, physics);
+            updatePlayer(camera, state, environment, GetFrameTime());
             }
 
             // ===== PHASE 8: RE-ENABLE INTERACTION SYSTEM =====
             // Handle interactions - disabled during dialog, inventory, or ESC menu
             if (!state.isInDialog && !state.showInventoryWindow && !state.showEscMenu) {
-                handleInteractions(camera, environment, state, GetTime());
+            handleInteractions(camera, environment, state, GetTime());
             }
 
             // ===== PHASE 7: RE-ENABLE FULL RENDERING =====
+            // **PROFILED**: Start rendering performance tracking
+            performanceStats.renderingTimer.start();
+            
             BeginDrawing();
 
                 ClearBackground(RAYWHITE);
@@ -476,12 +534,20 @@ int main(void)
                     if (playerInBuilding && !state.isInBuilding) {
                         state.isInBuilding = true;
                         state.currentBuilding = buildingIndex;
+                        // **CRITICAL FIX**: Release mouse when entering building for NPC interaction
+                        state.enhancedInput.setMouseCaptured(false);
+                        state.mouseReleased = true;
                         printf("Detected player inside building via position: %s\n",
                                objects[buildingIndex]->getName().c_str());
+                        printf("Mouse released for building interaction\n");
                     } else if (!playerInBuilding && state.isInBuilding) {
                         state.isInBuilding = false;
                         state.currentBuilding = -1;
+                        // **CRITICAL FIX**: Capture mouse when exiting building for FPS controls
+                        state.enhancedInput.setMouseCaptured(true);
+                        state.mouseReleased = false;
                         printf("Player exited building\n");
+                        printf("Mouse captured for FPS controls\n");
                     }
 
                     // ===== RENDER NPCS =====
@@ -591,76 +657,34 @@ int main(void)
                 }
 
                 // ===== RENDER UI SYSTEMS =====
-                // Draw UI elements
-                renderUI(camera, GetTime(), state, state.testBuildingCollision);
-
-                // **NEW: Render player stats** - Always visible in top-left
-                renderPlayerStatsUI(state);
-
-                // Render testing panel
-                renderTestingPanel(state, locationText, locationColor);
-
-                // Render game stats
-                renderGameStats(state);
-
-                // **NEW: Render inventory window** - Toggle with I key
-                if (state.showInventoryWindow) {
-                    renderInventoryUI(state);
-                }
-                
-                // **NEW: Render ESC pause menu** - Toggle with ESC key (with hover detection)
-                if (state.showEscMenu) {
-                    renderEscMenu(state);  // **Updates selectedMenuOption** based on mouse hover
+                // **UI SYSTEM**: Render all UI elements through organized system
+                {
+                    PROFILE_SYSTEM(performanceStats, ui);
+                    g_uiSystem->renderAllUI(camera, state, GetTime());
                 }
 
-                // Render dialog window
-                if (state.isInDialog && state.showDialogWindow) {
-                    renderDialogWindow(state);
-                }
+                // **PHASE 1 ENHANCEMENT**: Advanced Performance Monitor (separate from UI system for now)
+                renderAdvancedPerformanceOverlay(performanceStats, GetScreenWidth() - 310, 10);
 
-                // Render projected labels
+                // Render projected labels (3D world labels - not part of UI system)
                 renderProjectedLabels(camera, environment, state.isInBuilding, state.currentBuilding);
 
-                // ===== DIAGNOSTIC UI =====
-                DrawRectangle(10, 10, 400, 160, DARKBLUE);
-                DrawText("Browserwind - FULL GAME LOADED", 20, 15, 20, WHITE);
-                DrawText(TextFormat("Frame: %d", frameCounter), 20, 40, 16, GREEN);
-                DrawText(TextFormat("FPS: %d", GetFPS()), 20, 60, 16, GREEN);
-                
-                // **Enhanced mouse state display**
-                Color mouseStateColor = input.isMouseCaptured() ? GREEN : YELLOW;
-                const char* mouseStateText = input.isMouseCaptured() ? "CAPTURED (Gameplay)" : "FREE (UI Mode)";
-                DrawText(TextFormat("Mouse: %s", mouseStateText), 20, 80, 16, mouseStateColor);
-                
-                // **Menu state display**
-                if (state.showEscMenu) {
-                    DrawText("Game: PAUSED - ESC Menu active", 20, 100, 16, RED);
-                    DrawText("Controls: Click options | ESC=Resume", 20, 120, 14, RED);
-                } else if (state.showInventoryWindow) {
-                    DrawText("Inventory: OPEN - Click to interact!", 20, 100, 16, PURPLE);
-                    DrawText("Controls: Click items | I=Close & return to game", 20, 120, 14, PURPLE);
-                } else {
-                    DrawText("Controls: WASD + Mouse + LMB | I=Inventory", 20, 100, 16, YELLOW);
-                    DrawText("ESC: Pause menu | I=Inventory", 20, 120, 14, GREEN);
-                }
-                
-                // **Clear instructions**
-                DrawText("TIP: ESC opens pause menu (Save/Load/Quit)!", 20, 140, 12, ORANGE);
-
-                // Show camera position
+                // Show camera position (debug info)
                 DrawText(TextFormat("Camera: %.1f, %.1f, %.1f", camera.position.x, camera.position.y, camera.position.z),
                         10, GetScreenHeight() - 30, 16, WHITE);
 
-                // Render performance overlay (updated to use state.metrics)
-                DrawText(TextFormat("Avg: %.2fms | Frames: %d",
-                           state.metrics.averageFrameTime * 1000, state.metrics.totalFrames),
-                         10, 10, 16, LIME);
-
             EndDrawing();
+            
+            // **PROFILED**: Complete rendering performance tracking
+            performanceStats.renderingTimer.end();
         }
 
-        // Release cursor on exit
-        input.setMouseCaptured(false);
+        // **PHASE 2**: Release cursor on exit using enhanced input
+        state.enhancedInput.setMouseCaptured(false);
+        input.setMouseCaptured(false);  // Keep legacy for compatibility
+
+        // **UI SYSTEM**: Shutdown UI system
+        shutdownUISystem();
 
         std::cout << "Game exited cleanly. Total frames: " << frameCounter << std::endl;
 

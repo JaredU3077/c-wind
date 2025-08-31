@@ -7,7 +7,8 @@ void handleInteractions(Camera3D& camera, EnvironmentManager& environment, GameS
     std::string interactableName = "";
     static float lastEPressTime = 0.0f;
 
-    bool eKeyPressed = IsKeyPressed(KEY_E) && (currentTime - lastEPressTime) > 0.3f;
+    // **PHASE 2 ENHANCEMENT**: Interaction input using enhanced input with built-in debouncing
+    bool eKeyPressed = state.enhancedInput.isActionPressed("interact") && (currentTime - lastEPressTime) > 0.3f;
 
     if (eKeyPressed) {
         lastEPressTime = currentTime;

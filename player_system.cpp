@@ -12,8 +12,9 @@ void updatePlayer(Camera3D& camera, GameState& state, const EnvironmentManager& 
     const float PLAYER_RADIUS = 0.4f;
     const float PLAYER_HEIGHT = 1.8f;
 
-    // Handle jumping - disabled during dialog, inventory, or ESC menu
-    if (!state.isInDialog && !state.showInventoryWindow && !state.showEscMenu && IsKeyPressed(KEY_SPACE) && state.isGrounded && !state.isJumping) {
+    // **PHASE 2 ENHANCEMENT**: Handle jumping using enhanced input with action binding
+    if (!state.isInDialog && !state.showInventoryWindow && !state.showEscMenu && 
+        state.enhancedInput.isActionPressed("jump") && state.isGrounded && !state.isJumping) {
         state.isJumping = true;
         state.isGrounded = false;
         state.jumpVelocity = jumpStrength;
@@ -81,16 +82,17 @@ void updatePlayer(Camera3D& camera, GameState& state, const EnvironmentManager& 
         // **PRECISE MOVEMENT**: Calculate movement vector with no curvature
         Vector3 movement = {0.0f, 0.0f, 0.0f};
         
-        if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) {
+        // **PHASE 2 ENHANCEMENT**: Movement input using enhanced input manager with action bindings
+        if (state.enhancedInput.isActionDown("move_forward") || IsKeyDown(KEY_UP)) {
             movement = Vector3Add(movement, Vector3Scale(forward, moveSpeed));
         }
-        if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) {
+        if (state.enhancedInput.isActionDown("move_backward") || IsKeyDown(KEY_DOWN)) {
             movement = Vector3Add(movement, Vector3Scale(forward, -moveSpeed));
         }
-        if (IsKeyDown(KEY_D)) {  // Strafe right - perfectly linear
+        if (state.enhancedInput.isActionDown("strafe_right")) {  // Strafe right - perfectly linear
             movement = Vector3Add(movement, Vector3Scale(right, moveSpeed));
         }
-        if (IsKeyDown(KEY_A)) {  // Strafe left - perfectly linear
+        if (state.enhancedInput.isActionDown("strafe_left")) {  // Strafe left - perfectly linear
             movement = Vector3Add(movement, Vector3Scale(right, -moveSpeed));
         }
         

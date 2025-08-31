@@ -4,10 +4,10 @@
 
 #include "raylib.h"
 #include "inventory.h"
+#include "input_manager.h"
 #include <string>
 #include <vector>
 #include <functional>
-#include <mutex>
 #include <chrono>
 #include <memory>
 
@@ -35,7 +35,8 @@ struct GameState {
     
     // ESC Menu system
     bool showEscMenu = false;
-    int selectedMenuOption = 0;  // 0=Resume, 1=Save, 2=Load, 3=Quit
+    int selectedMenuOption = 0;
+    bool showTestingPanel = false;  // **TAB KEY TOGGLE** - Detailed testing checklist  // 0=Resume, 1=Save, 2=Load, 3=Quit
 
     // Game state
     bool isInBuilding = false;
@@ -62,6 +63,9 @@ struct GameState {
     
     // Inventory system
     std::unique_ptr<InventorySystem> inventorySystem = nullptr;
+    
+    // **PHASE 2 ENHANCEMENT**: Enhanced Input Manager for centralized input handling
+    mutable EnhancedInputManager enhancedInput;
 
     // Combat timing
     float lastSwingTime = 0.0f;
@@ -103,7 +107,7 @@ struct GameState {
 
 private:
     std::vector<StateChangeCallback> changeListeners_;
-    mutable std::mutex stateMutex_; // Thread safety for future multithreading
+    // **PHASE 2 FIX**: Removed mutex - single-threaded game doesn't need thread safety
 };
 
 // New: Serialization functions

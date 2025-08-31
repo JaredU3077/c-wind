@@ -5,7 +5,7 @@
 #include <algorithm>  // For std::min/std::max if needed in validation
 
 bool GameState::isValid() const {
-    std::lock_guard<std::mutex> lock(stateMutex_);
+    // **PHASE 2 FIX**: Removed mutex lock - single-threaded validation
     // Basic validation checks - expand as needed
     if (currentNPC < -1 || numDialogOptions < 0 || numDialogOptions > 3) return false;
     if (currentBuilding < -1) return false;
@@ -23,7 +23,7 @@ bool GameState::isValid() const {
 }
 
 void GameState::validateAndRepair() {
-    std::lock_guard<std::mutex> lock(stateMutex_);
+    // **PHASE 2 FIX**: Removed mutex lock - single-threaded repair
     // Repair invalid states
     if (currentNPC < -1) currentNPC = -1;
     if (numDialogOptions < 0) numDialogOptions = 0;
@@ -50,13 +50,13 @@ void GameState::validateAndRepair() {
     for (int i = numDialogOptions; i < 3; ++i) {
         dialogOptions[i] = "";
     }
-    // Notify if repairs were made (optional)
-    notifyChange("validated");
+    // **TEMP DEBUG**: Disable state change notification
+    // notifyChange("validated");
 }
 
 void GameState::resetToDefaults() {
-    std::lock_guard<std::mutex> lock(stateMutex_);
-    // Manually reset all members since copy assignment is disabled due to mutex
+    // **PHASE 2 FIX**: Removed mutex lock - single-threaded reset
+    // Reset all members to default values
     mouseReleased = false;
     isInDialog = false;
     currentNPC = -1;
@@ -104,16 +104,17 @@ void GameState::resetToDefaults() {
     lastCameraPos = {0.0f, 0.0f, 0.0f};
     metrics = PerformanceMetrics{};
     changeListeners_.clear();
-    notifyChange("reset");
+    // **TEMP DEBUG**: Disable state change notification  
+    // notifyChange("reset");
 }
 
 void GameState::addChangeListener(StateChangeCallback callback) {
-    std::lock_guard<std::mutex> lock(stateMutex_);
+    // **PHASE 2 FIX**: Removed mutex lock - single-threaded listener management
     changeListeners_.push_back(callback);
 }
 
 void GameState::notifyChange(const std::string& property) {
-    std::lock_guard<std::mutex> lock(stateMutex_);
+    // **PHASE 2 FIX**: Removed mutex lock - single-threaded notification
     for (const auto& listener : changeListeners_) {
         listener(property);
     }
