@@ -32,6 +32,8 @@ struct GameState {
     // Inventory UI state
     bool showInventoryWindow = false;
     std::string lastClickedItem = "";  // For inventory item interactions
+    std::string inventorySearchQuery = "";  // Current search query
+    bool inventorySearchActive = false;  // Whether search is active
     
     // ESC Menu system
     bool showEscMenu = false;
@@ -61,9 +63,12 @@ struct GameState {
     int playerLevel = 1;
     int playerExperience = 0;
     
-    // Inventory system
-    std::unique_ptr<InventorySystem> inventorySystem = nullptr;
-    
+    // Inventory system (pointer to Game's owned inventory)
+    InventorySystem* inventorySystem = nullptr;
+
+    // Game control flags
+    bool shouldClose = false;
+
     // **PHASE 2 ENHANCEMENT**: Enhanced Input Manager for centralized input handling
     mutable EnhancedInputManager enhancedInput;
 

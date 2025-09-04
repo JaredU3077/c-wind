@@ -271,6 +271,12 @@ public:
     void sortByValue();
     void sortByWeight();
     void sortByName();
+    void sortByRarity();
+
+    // Search and filtering
+    std::vector<std::shared_ptr<MysticalItem>> searchItems(const std::string& query) const;
+    std::vector<std::shared_ptr<MysticalItem>> filterByType(ItemType type) const;
+    std::vector<std::shared_ptr<MysticalItem>> filterByRarity(ItemRarity minRarity) const;
     
     // Access
     const std::vector<std::shared_ptr<MysticalItem>>& getAllItems() const { return items_; }

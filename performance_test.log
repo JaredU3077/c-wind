@@ -1,0 +1,420 @@
+Starting Browserwind with modern Game Engine architecture...
+[GENERAL] setupSignalHandlers  (debug_system.cpp:53) Signal handlers installed for crash detection
+[GENERAL] initialize           (debug_system.cpp:155) Debug system initialized
+[GENERAL] initialize           (debug_system.cpp:156) Debug level: 2
+[GENERAL] initialize           (debug_system.cpp:157) Verbose logging: OFF
+[GENERAL] initializeDebugSystem (debug_system.cpp:424) Debug system fully initialized
+WARNING: GLFW: Failed to find selected monitor
+WARNING: GLFW: Failed to find selected monitor
+[GENERAL] main                 (main_new.cpp:20) Display size: 0x0
+[GENERAL] main                 (main_new.cpp:27) Window size too large for display, using 80% of screen size
+[GENERAL] main                 (main_new.cpp:32) Using minimal fallback size: 800x600
+[GENERAL] main                 (main_new.cpp:38) Final window size: 800x600
+[GENERAL] main                 (main_new.cpp:39) Initializing window with Mac-specific fixes...
+INFO: Initializing raylib 5.5
+INFO: Platform backend: DESKTOP (GLFW)
+INFO: Supported raylib modules:
+INFO:     > rcore:..... loaded (mandatory)
+INFO:     > rlgl:...... loaded (mandatory)
+INFO:     > rshapes:... loaded (optional)
+INFO:     > rtextures:. loaded (optional)
+INFO:     > rtext:..... loaded (optional)
+INFO:     > rmodels:... loaded (optional)
+INFO:     > raudio:.... loaded (optional)
+INFO: DISPLAY: Device initialized successfully
+INFO:     > Display size: 1920 x 1080
+INFO:     > Screen size:  800 x 600
+INFO:     > Render size:  800 x 600
+INFO:     > Viewport offsets: 0, 0
+INFO: GLAD: OpenGL extensions loaded successfully
+INFO: GL: Supported extensions count: 43
+INFO: GL: OpenGL device information:
+INFO:     > Vendor:   Apple
+INFO:     > Renderer: Apple M4 Pro
+INFO:     > Version:  4.1 Metal - 89.4
+INFO:     > GLSL:     4.10
+INFO: GL: VAO extension detected, VAO functions loaded successfully
+INFO: GL: NPOT textures extension detected, full NPOT textures supported
+INFO: GL: DXT compressed textures supported
+INFO: PLATFORM: DESKTOP (GLFW - Cocoa): Initialized successfully
+INFO: TEXTURE: [ID 1] Texture loaded successfully (1x1 | R8G8B8A8 | 1 mipmaps)
+INFO: TEXTURE: [ID 1] Default texture loaded successfully
+INFO: SHADER: [ID 1] Vertex shader compiled successfully
+INFO: SHADER: [ID 2] Fragment shader compiled successfully
+INFO: SHADER: [ID 3] Program shader loaded successfully
+INFO: SHADER: [ID 3] Default shader loaded successfully
+INFO: RLGL: Render batch vertex buffers loaded successfully in RAM (CPU)
+INFO: RLGL: Render batch vertex buffers loaded successfully in VRAM (GPU)
+INFO: RLGL: Default OpenGL state initialized successfully
+INFO: TEXTURE: [ID 2] Texture loaded successfully (128x128 | GRAY_ALPHA | 1 mipmaps)
+INFO: FONT: Default font loaded successfully (224 glyphs)
+INFO: SYSTEM: Working Directory: /Users/u/Documents/c wind
+INFO: TIMER: Target time per frame: 33.333 milliseconds
+[GENERAL] main                 (main_new.cpp:52) Window initialized successfully
+[GENERAL] GameEngine           (game_engine.cpp:19) Initializing GameEngine
+SimpleInventory created successfully
+Enhanced Input Manager initialized with default key bindings
+[GENERAL] GameEngine           (game_engine.cpp:25) GameEngine initialization complete
+[GENERAL] main                 (main_new.cpp:60) Waiting for window to stabilize...
+[GENERAL] main                 (main_new.cpp:76) Loading complete, starting game engine...
+[GENERAL] run                  (game_engine.cpp:73) Starting main game loop
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+TAB DEBUG: Key=258, Found=0, Pressed=0
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+Attempting to load font: assets/fonts/medieval_header.ttf
+WARNING: FILEIO: [assets/fonts/medieval_header.ttf] Failed to read file
+Warning: Font loading failed for 'assets/fonts/medieval_header.ttf' (invalid texture or size). Using default font.
+Attempting to load font: assets/fonts/medieval_body.ttf
+WARNING: FILEIO: [assets/fonts/medieval_body.ttf] Failed to read file
+Warning: Font loading failed for 'assets/fonts/medieval_body.ttf' (invalid texture or size). Using default font.
+Attempting to load font: assets/fonts/medieval_ui.ttf
+WARNING: FILEIO: [assets/fonts/medieval_ui.ttf] Failed to read file
+Warning: Font loading failed for 'assets/fonts/medieval_ui.ttf' (invalid texture or size). Using default font.
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.559000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.707000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3337ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3336ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.359000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.339ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.334000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.482000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.331000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.468000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.541000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.526000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.377000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.335000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.875000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.504000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.333000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3333ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.357000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3333ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.362000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.345000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.589000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.540000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3337ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3336ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.425000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 34.346000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3346ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.820000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+COLLISION BOUNDS: Player at (10.0, 0.9, 10.0), radius: 0.4, height: 1.8
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+TAB DEBUG: Key=258, Found=1, Pressed=0
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.346000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.331000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.361000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.437000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.385000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.392000ms (Target: 16.67ms)
+CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
+DEBUG: PanelStyle::getDefault() called
+DEBUG: Background color: (25, 30, 45)
+DEBUG: Border color: (25, 30, 45)
+
+
+==========================================
+CRASH DETECTED! Signal: 15
+Last known location: Unknown
+==========================================
+
+=== DETAILED CALL STACK (11 frames) ===
+  [ 0] 0   Browserwind                         0x0000000104518974 _ZN13CrashReporter13dumpCallStackEv
+  [ 1] 1   Browserwind                         0x00000001045182f4 _ZN13CrashReporter13signalHandlerEi
+  [ 2] 2   libsystem_platform.dylib            0x0000000191d716a4 _sigtramp
+  [ 3] 3   libsystem_c.dylib                   0x0000000191bd56f4 nanosleep
+  [ 4] 4   libsystem_c.dylib                   0x0000000191bd560c usleep
+  [ 5] 5   libraylib.5.5.0.dylib               0x0000000104a066dc WaitTime
+  [ 6] 6   libraylib.5.5.0.dylib               0x0000000104a05b4c EndDrawing
+  [ 7] 7   Browserwind                         0x000000010454509c _ZN10GameEngine10renderGameEv
+  [ 8] 8   Browserwind                         0x00000001045423d8 _ZN10GameEngine3runEv
+  [ 9] 9   Browserwind                         0x00000001044ad360 main
+  [10] 10  dyld                                0x0000000191996b98 start
+=== END CALL STACK ===

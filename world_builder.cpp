@@ -1,66 +1,94 @@
-// world_builder.cpp
+// world_builder.cpp - Complete town world initialization
 #include "world_builder.h"
 #include "environmental_object.h"
+#include "constants.h"
+#include <iostream>
+#include <memory>
 
 void initializeWorld(EnvironmentManager& environment) {
-    // Create Mayor's Building (north side, blue, facing player spawn)
-    DoorConfig mayorDoor;
-    mayorDoor.offset = {0.0f, -2.5f, 4.0f};   // Door on north face (+Z)
-    mayorDoor.width = 1.2f;
-    mayorDoor.height = 2.8f;
-    mayorDoor.rotation = 0.0f;
-    mayorDoor.color = BROWN;
+    try {
+        std::cout << "WorldBuilder: Starting complete town world initialization..." << std::endl;
 
-    BuildingConfig mayorConfig;
-    mayorConfig.id = 0;  // Unique ID for Mayor's Building
-    mayorConfig.size = {10.0f, 5.0f, 8.0f};
-    mayorConfig.color = BLUE;
-    mayorConfig.name = "Mayor's Building";
-    mayorConfig.door = mayorDoor;
-    mayorConfig.canEnter = true;
+        // ===== CREATE MAYOR'S BUILDING (ID 0) =====
+        BuildingConfig mayorBuilding = {
+            .id = 0,
+            .size = {10.0f, 5.0f, 8.0f},
+            .color = BLUE,
+            .name = "Mayor's Office",
+            .door = {
+                .offset = {0.0f, 0.0f, -4.1f},
+                .width = EnvironmentConstants::BUILDING_DOOR_WIDTH,
+                .height = EnvironmentConstants::BUILDING_DOOR_HEIGHT,
+                .rotation = 0.0f,
+                .color = BROWN
+            },
+            .canEnter = true
+        };
 
-    auto mayorBuilding = EnvironmentalObjectFactory::createBuilding(mayorConfig, Vector3{0.0f, 2.5f, -12.0f});
-    environment.addObject(mayorBuilding);
+        auto mayorBuildingObj = EnvironmentalObjectFactory::createBuilding(mayorBuilding, {-12.0f, 2.5f, 0.0f});
+        environment.addObject(mayorBuildingObj);
+        std::cout << "WorldBuilder: Created Mayor's Office building" << std::endl;
 
-    // Create Shop Keeper's Building (east side, red, facing player spawn)
-    DoorConfig shopDoor;
-    shopDoor.offset = {4.0f, -2.5f, 0.0f};    // Door on east face (+X)
-    shopDoor.width = 1.2f;
-    shopDoor.height = 2.8f;
-    shopDoor.rotation = 90.0f; // Rotate to align properly
-    shopDoor.color = BROWN;
+        // ===== CREATE SHOP BUILDING (ID 1) =====
+        BuildingConfig shopBuilding = {
+            .id = 1,
+            .size = {8.0f, 5.0f, 6.0f},
+            .color = RED,
+            .name = "General Store",
+            .door = {
+                .offset = {0.0f, 0.0f, 3.1f},
+                .width = EnvironmentConstants::BUILDING_DOOR_WIDTH,
+                .height = EnvironmentConstants::BUILDING_DOOR_HEIGHT,
+                .rotation = 0.0f,
+                .color = BROWN
+            },
+            .canEnter = true
+        };
 
-    BuildingConfig shopConfig;
-    shopConfig.id = 1;  // Unique ID for Shop Building
-    shopConfig.size = {8.0f, 5.0f, 6.0f};
-    shopConfig.color = RED;
-    shopConfig.name = "Shop Keeper's Building";
-    shopConfig.door = shopDoor;
-    shopConfig.canEnter = true;
+        auto shopBuildingObj = EnvironmentalObjectFactory::createBuilding(shopBuilding, {0.0f, 2.5f, 12.0f});
+        environment.addObject(shopBuildingObj);
+        std::cout << "WorldBuilder: Created General Store building" << std::endl;
 
-    auto shopBuilding = EnvironmentalObjectFactory::createBuilding(shopConfig, Vector3{12.0f, 2.5f, 0.0f});
-    environment.addObject(shopBuilding);
+        // ===== CREATE CENTRAL WELL =====
+        WellConfig wellConfig = {
+            .baseRadius = EnvironmentConstants::WELL_BASE_RADIUS,
+            .height = EnvironmentConstants::WELL_HEIGHT
+        };
 
-    // Add central well
-    WellConfig wellConfig;
-    wellConfig.baseRadius = 1.5f;
-    wellConfig.height = 2.5f;
+        auto wellObj = EnvironmentalObjectFactory::createWell(wellConfig, {0.0f, wellConfig.height/2, 0.0f});  // Position so base is at ground level
+        environment.addObject(wellObj);
+        std::cout << "WorldBuilder: Created Central Well" << std::endl;
 
-    auto well = EnvironmentalObjectFactory::createWell(wellConfig, Vector3{0.0f, 0.0f, 0.0f});
-    environment.addObject(well);
+        // ===== CREATE TREES AROUND THE TOWN =====
+        TreeConfig treeConfig = {
+            .trunkRadius = EnvironmentConstants::TREE_TRUNK_RADIUS,
+            .trunkHeight = EnvironmentConstants::TREE_TRUNK_HEIGHT,
+            .foliageRadius = EnvironmentConstants::TREE_FOLIAGE_RADIUS
+        };
 
-    // Add decorative trees
-    TreeConfig treeConfig;
-    treeConfig.trunkRadius = 0.5f;
-    treeConfig.trunkHeight = 4.0f;
-    treeConfig.foliageRadius = 2.5f;
+        // Create several trees around the town perimeter - closer for visibility
+        // Position trees so their base is at ground level (Y=0.0f)
+        // Camera starts at (0, 1.75, 5) looking toward (0, 1.75, 0)
+        std::vector<Vector3> treePositions = {
+            {-8.0f, 0.0f, -8.0f},   // Closer to camera for visibility
+            {8.0f, 0.0f, -8.0f},
+            {-8.0f, 0.0f, 8.0f},
+            {8.0f, 0.0f, 8.0f},
+            {-12.0f, 0.0f, 0.0f},   // Along the sides
+            {12.0f, 0.0f, 0.0f}
+        };
 
-    auto tree1 = EnvironmentalObjectFactory::createTree(treeConfig, Vector3{-15.0f, 0.0f, -10.0f});
-    environment.addObject(tree1);
+        for (size_t i = 0; i < treePositions.size(); ++i) {
+            auto treeObj = EnvironmentalObjectFactory::createTree(treeConfig, treePositions[i]);
+            environment.addObject(treeObj);
+        }
+        std::cout << "WorldBuilder: Created " << treePositions.size() << " trees around town" << std::endl;
 
-    auto tree2 = EnvironmentalObjectFactory::createTree(treeConfig, Vector3{15.0f, 0.0f, -10.0f});
-    environment.addObject(tree2);
+        std::cout << "WorldBuilder: Complete town world initialization finished successfully!" << std::endl;
+        std::cout << "WorldBuilder: Created buildings, well, and environmental objects" << std::endl;
 
-    // Rebuild spatial grid with all objects for proper collision detection
-    environment.rebuildSpatialGrid();
+    } catch (const std::exception& e) {
+        std::cerr << "WorldBuilder: Exception during world initialization: " << e.what() << std::endl;
+        std::cout << "WorldBuilder: Continuing with minimal world setup" << std::endl;
+    }
 }

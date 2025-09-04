@@ -1,5 +1,7 @@
-// interaction_system.cpp
 #include "interaction_system.h"
+#include "math_utils.h"
+#include "constants.h"
+#include "collision_system.h"  // For checkPointInBounds
 #include <cmath>
 
 void handleInteractions(Camera3D& camera, EnvironmentManager& environment, GameState& state, float currentTime) {
@@ -27,12 +29,7 @@ void handleInteractions(Camera3D& camera, EnvironmentManager& environment, GameS
         }
 
         if (npcVisible) {
-            Vector3 toNPC = {
-                npcs[n].position.x - camera.position.x,
-                npcs[n].position.y - camera.position.y,
-                npcs[n].position.z - camera.position.z
-            };
-            float distance = sqrtf(toNPC.x * toNPC.x + toNPC.y * toNPC.y + toNPC.z * toNPC.z);
+            float distance = MathUtils::distance3D(npcs[n].position, camera.position);
 
             if (distance <= npcs[n].interactionRadius * 1.5f) {
                 nearInteractable = true;
@@ -54,14 +51,9 @@ void handleInteractions(Camera3D& camera, EnvironmentManager& environment, GameS
             if (auto building = std::dynamic_pointer_cast<Building>(objects[i])) {
                 if (building->isInteractive()) {
                     Vector3 doorPos = building->getDoorPosition();
-                    Vector3 toDoor = {
-                        doorPos.x - camera.position.x,
-                        doorPos.y - camera.position.y,
-                        doorPos.z - camera.position.z
-                    };
-                    float distance = sqrtf(toDoor.x * toDoor.x + toDoor.y * toDoor.y + toDoor.z * toDoor.z);
+                    float distance = MathUtils::distance3D(doorPos, camera.position);
 
-                    if (distance <= 3.0f && !state.isInBuilding) {
+                    if (distance <= EnvironmentConstants::INTERACTION_DISTANCE && !state.isInBuilding) {
                         nearInteractable = true;
                         interactableName = "Press E to enter " + building->getName();
                         if (eKeyPressed) {
@@ -70,7 +62,6 @@ void handleInteractions(Camera3D& camera, EnvironmentManager& environment, GameS
                             state.lastOutdoorPosition = camera.position;
 
                             // Set position more centered in the building interior
-                            Vector3 bSize = building->getSize();
                             camera.position = {building->position.x, 1.75f, building->position.z};
                             camera.target = {building->position.x, 1.55f, building->position.z - 3.0f}; // Look toward back of building
                             state.playerY = 0.0f;
@@ -141,5 +132,40 @@ void handleInteractions(Camera3D& camera, EnvironmentManager& environment, GameS
                 break;
             }
         }
+    }
+}
+
+// NEW: Update building entry based on position
+void updateBuildingEntry(Camera3D& camera, GameState& state, EnvironmentManager& environment) {
+    bool playerInBuilding = false;
+    int buildingIndex = -1;
+
+    auto objects = environment.getAllObjects();
+    for (size_t i = 0; i < objects.size(); ++i) {
+        if (auto building = std::dynamic_pointer_cast<Building>(objects[i])) {
+            CollisionBounds bBounds = building->getCollisionBounds();  // Assume getCollisionBounds() exists or add to EnvironmentalObject
+            if (CollisionSystem::checkPointInBounds(camera.position, bBounds)) {
+                playerInBuilding = true;
+                buildingIndex = building->getId();
+                break;
+            }
+        }
+    }
+
+    if (playerInBuilding && !state.isInBuilding) {
+        state.isInBuilding = true;
+        state.currentBuilding = buildingIndex;
+        state.enhancedInput.setMouseCaptured(false);
+        state.mouseReleased = true;
+        printf("Detected player inside building via position: %s\n", 
+               objects[buildingIndex]->getName().c_str());
+        printf("Mouse released for building interaction\n");
+    } else if (!playerInBuilding && state.isInBuilding) {
+        state.isInBuilding = false;
+        state.currentBuilding = -1;
+        state.enhancedInput.setMouseCaptured(true);
+        state.mouseReleased = false;
+        printf("Player exited building\n");
+        printf("Mouse captured for FPS controls\n");
     }
 }

@@ -1,16 +1,18 @@
 // combat.cpp
 #include "combat.h"
+#include "math_utils.h"
+#include "constants.h"
 #include <cmath>
 
-const int MAX_SWINGS = 3;
+const int MAX_SWINGS = GameConstants::MAX_SWINGS;
 LongswordSwing swings[MAX_SWINGS];
 float lastSwingTime = 0.0f;
-const float swingCooldown = 0.5f;
-const float swingRange = 3.0f;
-const float swingSpeed = 8.0f;
-const float swingDuration = 0.3f;
+const float swingCooldown = GameConstants::SWING_COOLDOWN;
+const float swingRange = GameConstants::SWING_RANGE;
+const float swingSpeed = GameConstants::SWING_SPEED;
+const float swingDuration = GameConstants::SWING_DURATION;
 
-const int MAX_TARGETS = 5;
+const int MAX_TARGETS = GameConstants::MAX_TARGETS;
 Target targets[MAX_TARGETS];
 
 void initCombat() {
@@ -47,12 +49,8 @@ void updateMeleeSwing(Camera3D camera, float currentTime, GameState& state) {
                 camera.target.z - camera.position.z
             };
 
-            float length = sqrtf(forward.x * forward.x + forward.y * forward.y + forward.z * forward.z);
-            if (length > 0) {
-                forward.x /= length;
-                forward.y /= length;
-                forward.z /= length;
-            }
+            // Normalize the forward vector using math utilities
+            forward = MathUtils::normalizeVector3D(forward);
 
             swings[i].direction = forward;
             swings[i].endPosition = {
@@ -70,12 +68,8 @@ void updateMeleeSwing(Camera3D camera, float currentTime, GameState& state) {
 
             for (int t = 0; t < MAX_TARGETS; t++) {
                 if (targets[t].active && !targets[t].hit) {
-                    Vector3 toTarget = {
-                        targets[t].position.x - swings[i].startPosition.x,
-                        targets[t].position.y - swings[i].startPosition.y,
-                        targets[t].position.z - swings[i].startPosition.z
-                    };
-                    float distance = sqrtf(toTarget.x * toTarget.x + toTarget.y * toTarget.y + toTarget.z * toTarget.z);
+                    // Calculate distance to target using math utilities
+                    float distance = MathUtils::distance3D(targets[t].position, swings[i].startPosition);
 
                     if (distance <= swingRange) {
                         targets[t].hit = true;
@@ -113,7 +107,7 @@ void updateTargets() {
     }
 }
 
-void renderCombat(Camera3D camera, float currentTime) {
+void renderCombat([[maybe_unused]] Camera3D camera, [[maybe_unused]] float currentTime) {
     for (int s = 0; s < MAX_SWINGS; s++) {
         if (swings[s].active) {
             Vector3 currentPos = {

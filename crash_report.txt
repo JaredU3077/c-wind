@@ -1,0 +1,257 @@
+CRASH REPORT - 1756619504
+Signal: 11
+Last location: Inventory Show Call
+Call stack size: 0
+==========================================
+
+CRASH REPORT - 1756619600
+Signal: 11
+Last location: UI Notification Call
+Call stack size: 1
+  [0] main
+==========================================
+
+CRASH REPORT - 1756619677
+Signal: 11
+Last location: Inventory Input Handling
+Call stack size: 0
+==========================================
+
+CRASH REPORT - 1756620709
+Signal: 15
+Last location: Inventory Input Handling
+Call stack size: 9
+  [0] 0   Browserwind                         0x00000001023ed464 _ZN13CrashReporter13dumpCallStackEv
+  [1] 1   Browserwind                         0x00000001023ecc48 _ZN13CrashReporter13signalHandlerEi
+  [2] 2   libsystem_platform.dylib            0x0000000191d716a4 _sigtramp
+  [3] 3   libraylib.5.5.0.dylib               0x0000000102674a00 DrawSphereEx
+  [4] 4   libraylib.5.5.0.dylib               0x0000000102674a00 DrawSphereEx
+  [5] 5   Browserwind                         0x00000001023be9a0 _ZN19EnvironmentalObject6renderERK8Camera3D
+  [6] 6   Browserwind                         0x00000001023bcaa0 _ZN18EnvironmentManager9renderAllERK8Camera3D
+  [7] 7   Browserwind                         0x00000001023b4834 main
+  [8] 8   dyld                                0x0000000191996b98 start
+==========================================
+
+CRASH REPORT - 1756620792
+Signal: 15
+Last location: Inventory Input Handling
+Call stack size: 9
+  [0] 0   Browserwind                         0x0000000104105464 _ZN13CrashReporter13dumpCallStackEv
+  [1] 1   Browserwind                         0x0000000104104c48 _ZN13CrashReporter13signalHandlerEi
+  [2] 2   libsystem_platform.dylib            0x0000000191d716a4 _sigtramp
+  [3] 3   libsystem_c.dylib                   0x0000000191bd56f4 nanosleep
+  [4] 4   libsystem_c.dylib                   0x0000000191bd560c usleep
+  [5] 5   libraylib.5.5.0.dylib               0x00000001043d66dc WaitTime
+  [6] 6   libraylib.5.5.0.dylib               0x00000001043d5b4c EndDrawing
+  [7] 7   Browserwind                         0x00000001040ce0a4 main
+  [8] 8   dyld                                0x0000000191996b98 start
+==========================================
+
+CRASH REPORT - 1756621918
+Signal: 15
+Last location: Unknown
+Call stack size: 10
+  [0] 0   Browserwind                         0x00000001048b1bfc _ZN13CrashReporter13dumpCallStackEv
+  [1] 1   Browserwind                         0x00000001048b157c _ZN13CrashReporter13signalHandlerEi
+  [2] 2   libsystem_platform.dylib            0x0000000191d716a4 _sigtramp
+  [3] 3   libsystem_c.dylib                   0x0000000191bd56f4 nanosleep
+  [4] 4   libsystem_c.dylib                   0x0000000191bd560c usleep
+  [5] 5   libraylib.5.5.0.dylib               0x0000000104ce26dc WaitTime
+  [6] 6   libraylib.5.5.0.dylib               0x0000000104ce1b4c EndDrawing
+  [7] 7   Browserwind                         0x000000010483f8d0 _Z10renderGameR9GameStateR8Camera3DR18EnvironmentManagerRK18NPCVisibilityStateP3NPCR18AdvancedFrameStats
+  [8] 8   Browserwind                         0x0000000104840c34 main
+  [9] 9   dyld                                0x0000000191996b98 start
+==========================================
+
+CRASH REPORT - 1756622191
+Signal: 15
+Last location: Unknown
+Call stack size: 11
+  [0] 0   Browserwind                         0x0000000104518974 _ZN13CrashReporter13dumpCallStackEv
+  [1] 1   Browserwind                         0x00000001045182f4 _ZN13CrashReporter13signalHandlerEi
+  [2] 2   libsystem_platform.dylib            0x0000000191d716a4 _sigtramp
+  [3] 3   libsystem_c.dylib                   0x0000000191bd56f4 nanosleep
+  [4] 4   libsystem_c.dylib                   0x0000000191bd560c usleep
+  [5] 5   libraylib.5.5.0.dylib               0x0000000104a066dc WaitTime
+  [6] 6   libraylib.5.5.0.dylib               0x0000000104a05b4c EndDrawing
+  [7] 7   Browserwind                         0x000000010454509c _ZN10GameEngine10renderGameEv
+  [8] 8   Browserwind                         0x00000001045423d8 _ZN10GameEngine3runEv
+  [9] 9   Browserwind                         0x00000001044ad360 main
+  [10] 10  dyld                                0x0000000191996b98 start
+==========================================
+
+CRASH REPORT - 1756622242
+Signal: 15
+Last location: Unknown
+Call stack size: 11
+  [0] 0   Browserwind                         0x0000000100d38974 _ZN13CrashReporter13dumpCallStackEv
+  [1] 1   Browserwind                         0x0000000100d382f4 _ZN13CrashReporter13signalHandlerEi
+  [2] 2   libsystem_platform.dylib            0x0000000191d716a4 _sigtramp
+  [3] 3   libsystem_c.dylib                   0x0000000191bd56f4 nanosleep
+  [4] 4   libsystem_c.dylib                   0x0000000191bd560c usleep
+  [5] 5   libraylib.5.5.0.dylib               0x000000010120e6dc WaitTime
+  [6] 6   libraylib.5.5.0.dylib               0x000000010120db4c EndDrawing
+  [7] 7   Browserwind                         0x0000000100d6509c _ZN10GameEngine10renderGameEv
+  [8] 8   Browserwind                         0x0000000100d623d8 _ZN10GameEngine3runEv
+  [9] 9   Browserwind                         0x0000000100ccd360 main
+  [10] 10  dyld                                0x0000000191996b98 start
+==========================================
+
+CRASH REPORT - 1756622467
+Signal: 15
+Last location: Unknown
+Call stack size: 10
+  [0] 0   Browserwind                         0x0000000102aa98e4 _ZN13CrashReporter13dumpCallStackEv
+  [1] 1   Browserwind                         0x0000000102aa9264 _ZN13CrashReporter13signalHandlerEi
+  [2] 2   libsystem_platform.dylib            0x0000000191d716a4 _sigtramp
+  [3] 3   libsystem_c.dylib                   0x0000000191bd56f4 nanosleep
+  [4] 4   libsystem_c.dylib                   0x0000000191bd560c usleep
+  [5] 5   libraylib.5.5.0.dylib               0x0000000102e366dc WaitTime
+  [6] 6   libraylib.5.5.0.dylib               0x0000000102e35b4c EndDrawing
+  [7] 7   Browserwind                         0x0000000102a37718 _Z10renderGameR9GameStateR8Camera3DR18EnvironmentManagerRK18NPCVisibilityStateP3NPCR18AdvancedFrameStats
+  [8] 8   Browserwind                         0x0000000102a389e8 main
+  [9] 9   dyld                                0x0000000191996b98 start
+==========================================
+
+CRASH REPORT - 1756622603
+Signal: 15
+Last location: Unknown
+Call stack size: 10
+  [0] 0   Browserwind                         0x0000000104e058e4 _ZN13CrashReporter13dumpCallStackEv
+  [1] 1   Browserwind                         0x0000000104e05264 _ZN13CrashReporter13signalHandlerEi
+  [2] 2   libsystem_platform.dylib            0x0000000191d716a4 _sigtramp
+  [3] 3   libsystem_c.dylib                   0x0000000191bd56f4 nanosleep
+  [4] 4   libsystem_c.dylib                   0x0000000191bd560c usleep
+  [5] 5   libraylib.5.5.0.dylib               0x00000001051926dc WaitTime
+  [6] 6   libraylib.5.5.0.dylib               0x0000000105191b4c EndDrawing
+  [7] 7   Browserwind                         0x0000000104d93718 _Z10renderGameR9GameStateR8Camera3DR18EnvironmentManagerRK18NPCVisibilityStateP3NPCR18AdvancedFrameStats
+  [8] 8   Browserwind                         0x0000000104d949e8 main
+  [9] 9   dyld                                0x0000000191996b98 start
+==========================================
+
+CRASH REPORT - 1756622610
+Signal: 15
+Last location: Unknown
+Call stack size: 10
+  [0] 0   Browserwind                         0x0000000100a258e4 _ZN13CrashReporter13dumpCallStackEv
+  [1] 1   Browserwind                         0x0000000100a25264 _ZN13CrashReporter13signalHandlerEi
+  [2] 2   libsystem_platform.dylib            0x0000000191d716a4 _sigtramp
+  [3] 3   libsystem_c.dylib                   0x0000000191bd56f4 nanosleep
+  [4] 4   libsystem_c.dylib                   0x0000000191bd560c usleep
+  [5] 5   libraylib.5.5.0.dylib               0x0000000100db26dc WaitTime
+  [6] 6   libraylib.5.5.0.dylib               0x0000000100db1b4c EndDrawing
+  [7] 7   Browserwind                         0x00000001009b3718 _Z10renderGameR9GameStateR8Camera3DR18EnvironmentManagerRK18NPCVisibilityStateP3NPCR18AdvancedFrameStats
+  [8] 8   Browserwind                         0x00000001009b49e8 main
+  [9] 9   dyld                                0x0000000191996b98 start
+==========================================
+
+CRASH REPORT - 1756622647
+Signal: 15
+Last location: Unknown
+Call stack size: 10
+  [0] 0   Browserwind                         0x000000010094d8e4 _ZN13CrashReporter13dumpCallStackEv
+  [1] 1   Browserwind                         0x000000010094d264 _ZN13CrashReporter13signalHandlerEi
+  [2] 2   libsystem_platform.dylib            0x0000000191d716a4 _sigtramp
+  [3] 3   libsystem_c.dylib                   0x0000000191bd56f4 nanosleep
+  [4] 4   libsystem_c.dylib                   0x0000000191bd560c usleep
+  [5] 5   libraylib.5.5.0.dylib               0x0000000100cda6dc WaitTime
+  [6] 6   libraylib.5.5.0.dylib               0x0000000100cd9b4c EndDrawing
+  [7] 7   Browserwind                         0x00000001008db718 _Z10renderGameR9GameStateR8Camera3DR18EnvironmentManagerRK18NPCVisibilityStateP3NPCR18AdvancedFrameStats
+  [8] 8   Browserwind                         0x00000001008dc9e8 main
+  [9] 9   dyld                                0x0000000191996b98 start
+==========================================
+
+CRASH REPORT - 1756622857
+Signal: 15
+Last location: SimpleInventory::drawItems()
+Call stack size: 10
+  [0] 0   Browserwind                         0x0000000100835664 _ZN13CrashReporter13dumpCallStackEv
+  [1] 1   Browserwind                         0x0000000100834fe4 _ZN13CrashReporter13signalHandlerEi
+  [2] 2   libsystem_platform.dylib            0x0000000191d716a4 _sigtramp
+  [3] 3   libsystem_c.dylib                   0x0000000191bd56f4 nanosleep
+  [4] 4   libsystem_c.dylib                   0x0000000191bd560c usleep
+  [5] 5   libraylib.5.5.0.dylib               0x0000000100d666dc WaitTime
+  [6] 6   libraylib.5.5.0.dylib               0x0000000100d65b4c EndDrawing
+  [7] 7   Browserwind                         0x00000001007c3718 _Z10renderGameR9GameStateR8Camera3DR18EnvironmentManagerRK18NPCVisibilityStateP3NPCR18AdvancedFrameStats
+  [8] 8   Browserwind                         0x00000001007c49e8 main
+  [9] 9   dyld                                0x0000000191996b98 start
+==========================================
+
+CRASH REPORT - 1756622897
+Signal: 15
+Last location: SimpleInventory::drawItems()
+Call stack size: 10
+  [0] 0   Browserwind                         0x000000010423d664 _ZN13CrashReporter13dumpCallStackEv
+  [1] 1   Browserwind                         0x000000010423cfe4 _ZN13CrashReporter13signalHandlerEi
+  [2] 2   libsystem_platform.dylib            0x0000000191d716a4 _sigtramp
+  [3] 3   libsystem_c.dylib                   0x0000000191bd56f4 nanosleep
+  [4] 4   libsystem_c.dylib                   0x0000000191bd560c usleep
+  [5] 5   libraylib.5.5.0.dylib               0x00000001047626dc WaitTime
+  [6] 6   libraylib.5.5.0.dylib               0x0000000104761b4c EndDrawing
+  [7] 7   Browserwind                         0x00000001041cb718 _Z10renderGameR9GameStateR8Camera3DR18EnvironmentManagerRK18NPCVisibilityStateP3NPCR18AdvancedFrameStats
+  [8] 8   Browserwind                         0x00000001041cc9e8 main
+  [9] 9   dyld                                0x0000000191996b98 start
+==========================================
+
+CRASH REPORT - 1756622941
+Signal: 15
+Last location: SimpleInventory::drawItems()
+Call stack size: 10
+  [0] 0   Browserwind                         0x000000010282d6e8 _ZN13CrashReporter13dumpCallStackEv
+  [1] 1   Browserwind                         0x000000010282d068 _ZN13CrashReporter13signalHandlerEi
+  [2] 2   libsystem_platform.dylib            0x0000000191d716a4 _sigtramp
+  [3] 3   libsystem_c.dylib                   0x0000000191bd56f4 nanosleep
+  [4] 4   libsystem_c.dylib                   0x0000000191bd560c usleep
+  [5] 5   libraylib.5.5.0.dylib               0x0000000102d266dc WaitTime
+  [6] 6   libraylib.5.5.0.dylib               0x0000000102d25b4c EndDrawing
+  [7] 7   Browserwind                         0x00000001027bb718 _Z10renderGameR9GameStateR8Camera3DR18EnvironmentManagerRK18NPCVisibilityStateP3NPCR18AdvancedFrameStats
+  [8] 8   Browserwind                         0x00000001027bc9e8 main
+  [9] 9   dyld                                0x0000000191996b98 start
+==========================================
+
+CRASH REPORT - 1756623128
+Signal: 15
+Last location: Unknown
+Call stack size: 10
+  [0] 0   Browserwind                         0x0000000104a41340 _ZN13CrashReporter13dumpCallStackEv
+  [1] 1   Browserwind                         0x0000000104a40cc0 _ZN13CrashReporter13signalHandlerEi
+  [2] 2   libsystem_platform.dylib            0x0000000191d716a4 _sigtramp
+  [3] 3   libsystem_c.dylib                   0x0000000191bd56f4 nanosleep
+  [4] 4   libsystem_c.dylib                   0x0000000191bd560c usleep
+  [5] 5   libraylib.5.5.0.dylib               0x0000000104f8e6dc WaitTime
+  [6] 6   libraylib.5.5.0.dylib               0x0000000104f8db4c EndDrawing
+  [7] 7   Browserwind                         0x00000001049d2bc4 _Z10renderGameR9GameStateR8Camera3DR18EnvironmentManagerRK18NPCVisibilityStateP3NPCR18AdvancedFrameStats
+  [8] 8   Browserwind                         0x00000001049d3d34 main
+  [9] 9   dyld                                0x0000000191996b98 start
+==========================================
+
+CRASH REPORT - 1756623488
+Signal: 15
+Last location: Unknown
+Call stack size: 24
+  [0] 0   Browserwind                         0x0000000102501340 _ZN13CrashReporter13dumpCallStackEv
+  [1] 1   Browserwind                         0x0000000102500cc0 _ZN13CrashReporter13signalHandlerEi
+  [2] 2   libsystem_platform.dylib            0x0000000191d716a4 _sigtramp
+  [3] 3   libsystem_kernel.dylib              0x0000000191d083a0 mach_msg2_internal
+  [4] 4   IOKit                               0x0000000195bbdfa4 io_connect_method
+  [5] 5   IOKit                               0x0000000195bbdd34 IOConnectCallMethod
+  [6] 6   IOGPU                               0x00000001b3877188 IOGPUCommandQueueSubmitCommandBuffers
+  [7] 7   IOGPU                               0x00000001b3863f84 -[IOGPUMetalCommandQueue _submitCommandBuffers:count:]
+  [8] 8   IOGPU                               0x00000001b3863df4 -[IOGPUMetalCommandQueue submitCommandBuffers:count:]
+  [9] 9   Metal                               0x000000019d15680c -[_MTLCommandQueue _submitAvailableCommandBuffers]
+  [10] 10  Metal                               0x000000019d15d3b8 __40-[_MTLCommandQueue submitCommandBuffer:]_block_invoke
+  [11] 11  libdispatch.dylib                   0x0000000191b9985c _dispatch_client_callout
+  [12] 12  libdispatch.dylib                   0x0000000191b8f7a8 _dispatch_lane_barrier_sync_invoke_and_complete
+  [13] 13  Metal                               0x000000019d15d374 -[_MTLCommandQueue submitCommandBuffer:]
+  [14] 14  AppleMetalOpenGLRenderer            0x0000000102f18524 _ZN13GLDContextRec12flushContextEb
+  [15] 15  AppleMetalOpenGLRenderer            0x0000000102f03e04 gldPresentFramebufferData
+  [16] 16  GLEngine                            0x00000001f240d670 glSwap_Exec
+  [17] 17  OpenGL                              0x00000001f221b5bc CGLFlushDrawable
+  [18] 18  AppKit                              0x0000000195fea8b8 -[NSOpenGLContext flushBuffer]
+  [19] 19  libraylib.5.5.0.dylib               0x00000001029fc130 swapBuffersNSGL
+  [20] 20  libraylib.5.5.0.dylib               0x0000000102985b18 EndDrawing
+  [21] 21  Browserwind                         0x0000000102492bc4 _Z10renderGameR9GameStateR8Camera3DR18EnvironmentManagerRK18NPCVisibilityStateP3NPCR18AdvancedFrameStats
+  [22] 22  Browserwind                         0x0000000102493d34 main
+  [23] 23  dyld                                0x0000000191996b98 start
+==========================================
+

@@ -57,6 +57,17 @@ void EnhancedInputManager::update(float deltaTime) {
     mouseDeltaSmoothed_.y = mouseDeltaSmoothed_.y * (1.0f - MOUSE_SMOOTHING_FACTOR) + 
                            mouseDelta_.y * MOUSE_SMOOTHING_FACTOR;
     
+    // **NEW: DISPATCH ACTION CALLBACKS**
+    for (const auto& pair : keyBindings_) {
+        const std::string& action = pair.first;
+        if (isActionPressed(action)) {
+            auto cbIt = actionCallbacks_.find(action);
+            if (cbIt != actionCallbacks_.end()) {
+                cbIt->second();  // Call the callback
+            }
+        }
+    }
+    
     // **CLEAN UP OLD EVENTS** from buffer
     while (!eventBuffer_.empty() && eventBuffer_.size() > MAX_BUFFER_SIZE) {
         eventBuffer_.pop();
@@ -222,21 +233,34 @@ int EnhancedInputManager::getKeyBinding(const std::string& action) const {
 
 bool EnhancedInputManager::isActionPressed(const std::string& action) const {
     int key = getKeyBinding(action);
+    // Removed excessive TAB key debug output
+    #ifdef BROWSERWIND_DEBUG
     if (action == "testing_panel") {
-        // Debug TAB key detection
+        // Debug TAB key detection very rarely
         static int debugCounter = 0;
-        if (debugCounter++ % 60 == 0) {  // Log every 60 frames
+        if (debugCounter++ % 1800 == 0) {  // Once every 30 seconds
             auto it = keyStates_.find(key);
             bool keyPressed = it != keyStates_.end() && it->second.isPressed;
             std::cout << "TAB DEBUG: Key=" << key << ", Found=" << (it != keyStates_.end()) << ", Pressed=" << keyPressed << std::endl;
         }
     }
+    #endif
     return key != -1 && isKeyPressed(key);
 }
 
 bool EnhancedInputManager::isActionDown(const std::string& action) const {
     int key = getKeyBinding(action);
     return key != -1 && isKeyDown(key);
+}
+
+// **NEW METHODS**
+void EnhancedInputManager::registerActionCallback(const std::string& action, std::function<void()> callback) {
+    actionCallbacks_[action] = callback;
+    std::cout << "Registered callback for action: " << action << std::endl;
+}
+
+void EnhancedInputManager::unregisterActionCallback(const std::string& action) {
+    actionCallbacks_.erase(action);
 }
 
 // **DEBUG & DIAGNOSTICS**

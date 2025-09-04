@@ -1,5 +1,6 @@
 // environment_manager.cpp (updated)
 #include "environment_manager.h"
+#include "math_utils.h"
 #include "raylib.h"
 #include <cmath>
 #include <iostream>  // For error logging
@@ -49,15 +50,17 @@ bool EnvironmentManager::checkCollision(const CollisionBounds& bounds, int exclu
     // This is more predictable and easier to debug than a complex spatial partitioning system
     auto candidates = objects;  // Always check all objects - it's only 5 objects, very fast
     
-    // Debug: Log collision check occasionally
+    // Debug: Log collision check very rarely (only when debugging)
+    #ifdef BROWSERWIND_DEBUG
     static int debugCounter = 0;
     debugCounter++;
-    if (debugCounter % 180 == 0) {  // Reduced frequency
+    if (debugCounter % 1800 == 0) {  // Once every 30 seconds at 60 FPS
         BoundingBox queryBox = CollisionSystem::boundsToBox(bounds);
-        printf("COLLISION CHECK: Player bounds (%.1f,%.1f,%.1f) to (%.1f,%.1f,%.1f), exclude: %d\n", 
+        printf("COLLISION CHECK: Player bounds (%.1f,%.1f,%.1f) to (%.1f,%.1f,%.1f), exclude: %d\n",
                queryBox.min.x, queryBox.min.y, queryBox.min.z,
                queryBox.max.x, queryBox.max.y, queryBox.max.z, excludeIndex);
     }
+    #endif
 
     for (const auto& obj : candidates) {
         if (obj->collidable) {
@@ -88,11 +91,13 @@ bool EnvironmentManager::checkCollision(const CollisionBounds& bounds, int exclu
             if (!shouldExclude) {
                 auto objBounds = obj->getCollisionBounds();
                 if (CollisionSystem::checkCollision(bounds, objBounds)) {
-                    if (debugCounter % 180 == 0) {  // Reduced debug frequency
-                        printf("  COLLISION DETECTED: Player hit %s at (%.1f,%.1f,%.1f)!\n", 
+                    #ifdef BROWSERWIND_DEBUG
+                    if (debugCounter % 1800 == 0) {  // Very rare debug frequency
+                        printf("  COLLISION DETECTED: Player hit %s at (%.1f,%.1f,%.1f)!\n",
                                obj->getName().c_str(),
                                objBounds.position.x, objBounds.position.y, objBounds.position.z);
                     }
+                    #endif
                     return true;
                 }
             }
@@ -216,8 +221,7 @@ void EnvironmentManager::SpatialGrid::rebuildWithObjects(const std::vector<std::
 
 // LODManager implementations
 EnvironmentManager::DetailLevel EnvironmentManager::LODManager::getLODLevel(const Vector3& cameraPos, const Vector3& objectPos, float maxDistance) {
-    Vector3 diff = {cameraPos.x - objectPos.x, cameraPos.y - objectPos.y, cameraPos.z - objectPos.z};
-    float distance = sqrtf(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z);
+    float distance = MathUtils::distance3D(cameraPos, objectPos);
     if (distance > maxDistance) return DetailLevel::CULLED;
     if (distance > maxDistance * 0.7f) return DetailLevel::LOW;
     if (distance > maxDistance * 0.3f) return DetailLevel::MEDIUM;

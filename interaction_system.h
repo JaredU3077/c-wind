@@ -1,4 +1,3 @@
-// interaction_system.h
 #ifndef INTERACTION_SYSTEM_H
 #define INTERACTION_SYSTEM_H
 
@@ -9,5 +8,8 @@
 #include "game_state.h"
 
 void handleInteractions(Camera3D& camera, EnvironmentManager& environment, GameState& state, float currentTime);
+
+// NEW: For building entry detection
+void updateBuildingEntry(Camera3D& camera, GameState& state, EnvironmentManager& environment);
 
 #endif

@@ -1,8 +1,10 @@
 // environmental_object.cpp (updated)
 #include "environmental_object.h"
+#include "math_utils.h"
 #include "collision_system.h"  // For CollisionBounds and CollisionShape
 #include "rlgl.h"             // For rlPushMatrix, rlTranslatef, rlRotatef, rlPopMatrix
 #include <cmath>
+#include <iostream>
 
 void EnvironmentalObject::addComponent(std::unique_ptr<Component> component) {
     components_[component->getTypeName()] = std::move(component);
@@ -19,7 +21,7 @@ void EnvironmentalObject::update(float deltaTime) {
     }
 }
 
-void EnvironmentalObject::render(const Camera3D& camera) {
+void EnvironmentalObject::render([[maybe_unused]] const Camera3D& camera) {
     if (auto renderComp = dynamic_cast<RenderComponent*>(getComponent("RenderComponent"))) {
         // Apply position transformation before rendering
         rlPushMatrix();
@@ -79,7 +81,7 @@ std::shared_ptr<EnvironmentalObject> EnvironmentalObjectFactory::createTree(cons
 // Building Components
 BuildingRenderComponent::BuildingRenderComponent(const BuildingConfig& config) : config_(config) {}
 
-void BuildingRenderComponent::render(const Camera3D& camera) {
+void BuildingRenderComponent::render([[maybe_unused]] const Camera3D& camera) {
     // Draw main building (position is from owner)
     DrawCube({0,0,0}, config_.size.x, config_.size.y, config_.size.z, config_.color);  // Relative to position
     DrawCubeWires({0,0,0}, config_.size.x, config_.size.y, config_.size.z, BLACK);
@@ -136,8 +138,7 @@ Vector3 Building::getDoorPosition() const {
 
 bool Building::isPlayerAtDoor(Vector3 playerPos, float threshold) const {
     Vector3 doorPos = getDoorPosition();
-    Vector3 diff = {playerPos.x - doorPos.x, playerPos.y - doorPos.y, playerPos.z - doorPos.z};
-    float distance = sqrtf(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z);
+    float distance = MathUtils::distance3D(playerPos, doorPos);
     return distance <= threshold;
 }
 
@@ -165,7 +166,7 @@ CollisionBounds Building::getWallCollisionBounds() const {
 // Well Components
 WellRenderComponent::WellRenderComponent(const WellConfig& config) : config_(config) {}
 
-void WellRenderComponent::render(const Camera3D& camera) {
+void WellRenderComponent::render([[maybe_unused]] const Camera3D& camera) {
     DrawCylinder({0,0,0}, config_.baseRadius, config_.baseRadius, 0.5f, 16, DARKGRAY);
     DrawCylinder({0,0,0}, config_.baseRadius * 0.8f, config_.baseRadius * 0.8f, config_.height, 16, GRAY);
     DrawCylinder({0, config_.height, 0}, config_.baseRadius * 0.9f, config_.baseRadius * 0.7f, 0.2f, 16, DARKGRAY);
@@ -194,9 +195,33 @@ Well::Well(Vector3 pos, const WellConfig& config) : config_(config) {
 // Tree Components
 TreeRenderComponent::TreeRenderComponent(const TreeConfig& config) : config_(config) {}
 
-void TreeRenderComponent::render(const Camera3D& camera) {
-    DrawCylinder({0,0,0}, config_.trunkRadius, config_.trunkRadius, config_.trunkHeight, 8, DARKBROWN);
-    DrawSphere({0, config_.trunkHeight, 0}, config_.foliageRadius, GREEN);
+void TreeRenderComponent::render([[maybe_unused]] const Camera3D& camera) {
+    // Draw trunk - positioned from ground level up with realistic tree colors
+    Vector3 trunkPos = {0, config_.trunkHeight/2, 0};
+    DrawCylinder(trunkPos, config_.trunkRadius, config_.trunkRadius, config_.trunkHeight, 16, Color{139, 69, 19, 255}); // Saddle brown
+    DrawCylinderWires(trunkPos, config_.trunkRadius, config_.trunkRadius, config_.trunkHeight, 16, Color{101, 67, 33, 255}); // Darker brown
+
+    // Draw foliage - layered spheres for more realistic tree shape
+    // Main foliage layer at top of trunk
+    Vector3 mainFoliagePos = {0, config_.trunkHeight - 0.3f, 0};
+    DrawSphere(mainFoliagePos, config_.foliageRadius, Color{34, 139, 34, 255}); // Forest green
+    DrawSphereWires(mainFoliagePos, config_.foliageRadius, 12, 8, Color{0, 100, 0, 255}); // Dark green wireframe
+
+    // Upper foliage layer for tree-like shape
+    Vector3 upperFoliagePos = {0, config_.trunkHeight + 0.5f, 0};
+    DrawSphere(upperFoliagePos, config_.foliageRadius * 0.8f, Color{50, 160, 50, 255}); // Lighter green
+    DrawSphereWires(upperFoliagePos, config_.foliageRadius * 0.8f, 10, 6, Color{25, 120, 25, 255});
+
+    // Add some smaller branches for realism
+    float branchY = config_.trunkHeight * 0.7f;
+    Vector3 branchPos1 = {config_.trunkRadius + 0.2f, branchY, 0};
+    Vector3 branchPos2 = {-config_.trunkRadius - 0.2f, branchY, 0};
+    Vector3 branchPos3 = {0, branchY, config_.trunkRadius + 0.2f};
+
+    // Draw small branch stubs
+    DrawCylinder(branchPos1, 0.1f, 0.1f, 0.8f, 8, Color{101, 67, 33, 255});
+    DrawCylinder(branchPos2, 0.1f, 0.1f, 0.8f, 8, Color{101, 67, 33, 255});
+    DrawCylinder(branchPos3, 0.1f, 0.1f, 0.8f, 8, Color{101, 67, 33, 255});
 }
 
 TreePhysicsComponent::TreePhysicsComponent(float trunkRadius, float trunkHeight) : trunkRadius_(trunkRadius), trunkHeight_(trunkHeight) {}

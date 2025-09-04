@@ -13,7 +13,7 @@
 class Component {
 public:
     virtual ~Component() = default;
-    virtual void update(float deltaTime) {}
+    virtual void update([[maybe_unused]] float deltaTime) {}
     virtual std::string getTypeName() const = 0;
 };
 
@@ -31,6 +31,7 @@ public:
 
 class EnvironmentalObject {
 public:
+    EnvironmentalObject() : components_() {}  // Explicitly initialize components map
     virtual ~EnvironmentalObject() = default;
     void addComponent(std::unique_ptr<Component> component);
     Component* getComponent(const std::string& typeName) const;

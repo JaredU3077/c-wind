@@ -384,6 +384,64 @@ void AdventurerInventory::sortByName() {
         });
 }
 
+void AdventurerInventory::sortByRarity() {
+    std::sort(items_.begin(), items_.end(),
+        [](const std::shared_ptr<MysticalItem>& a, const std::shared_ptr<MysticalItem>& b) {
+            return static_cast<int>(a->getRarity()) > static_cast<int>(b->getRarity());
+        });
+}
+
+// ============================================================================
+// Search and Filtering Implementation
+// ============================================================================
+
+std::vector<std::shared_ptr<MysticalItem>> AdventurerInventory::searchItems(const std::string& query) const {
+    std::vector<std::shared_ptr<MysticalItem>> results;
+
+    if (query.empty()) {
+        return items_;  // Return all items if no query
+    }
+
+    std::string lowerQuery = query;
+    std::transform(lowerQuery.begin(), lowerQuery.end(), lowerQuery.begin(), ::tolower);
+
+    std::copy_if(items_.begin(), items_.end(), std::back_inserter(results),
+        [&lowerQuery](const std::shared_ptr<MysticalItem>& item) {
+            std::string itemName = item->getName();
+            std::string itemDesc = item->getDescription();
+
+            // Convert to lowercase for case-insensitive search
+            std::transform(itemName.begin(), itemName.end(), itemName.begin(), ::tolower);
+            std::transform(itemDesc.begin(), itemDesc.end(), itemDesc.begin(), ::tolower);
+
+            // Search in name and description
+            return itemName.find(lowerQuery) != std::string::npos ||
+                   itemDesc.find(lowerQuery) != std::string::npos ||
+                   ItemUtils::itemTypeToString(item->getType()).find(lowerQuery) != std::string::npos ||
+                   ItemUtils::rarityToString(item->getRarity()).find(lowerQuery) != std::string::npos;
+        });
+
+    return results;
+}
+
+std::vector<std::shared_ptr<MysticalItem>> AdventurerInventory::filterByType(ItemType type) const {
+    std::vector<std::shared_ptr<MysticalItem>> results;
+    std::copy_if(items_.begin(), items_.end(), std::back_inserter(results),
+        [type](const std::shared_ptr<MysticalItem>& item) {
+            return item->getType() == type;
+        });
+    return results;
+}
+
+std::vector<std::shared_ptr<MysticalItem>> AdventurerInventory::filterByRarity(ItemRarity minRarity) const {
+    std::vector<std::shared_ptr<MysticalItem>> results;
+    std::copy_if(items_.begin(), items_.end(), std::back_inserter(results),
+        [minRarity](const std::shared_ptr<MysticalItem>& item) {
+            return static_cast<int>(item->getRarity()) >= static_cast<int>(minRarity);
+        });
+    return results;
+}
+
 std::vector<std::shared_ptr<MysticalItem>> AdventurerInventory::getEquippableItems() const {
     std::vector<std::shared_ptr<MysticalItem>> result;
     std::copy_if(items_.begin(), items_.end(), std::back_inserter(result),

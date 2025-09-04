@@ -7,6 +7,7 @@
 #include <queue>
 #include <chrono>
 #include <string>
+#include <functional>  // For std::function
 
 // **ENHANCED INPUT MANAGER SYSTEM** - Centralized input with state caching and validation
 
@@ -80,6 +81,10 @@ public:
     int getKeyBinding(const std::string& action) const;
     bool isActionPressed(const std::string& action) const;
     bool isActionDown(const std::string& action) const;
+
+    // **NEW: ACTION CALLBACKS** - Event-driven dispatch
+    void registerActionCallback(const std::string& action, std::function<void()> callback);
+    void unregisterActionCallback(const std::string& action);
     
     // **DEBUG & DIAGNOSTICS**
     void printInputState() const;
@@ -111,6 +116,9 @@ private:
     
     // **SMOOTHING**
     static constexpr float MOUSE_SMOOTHING_FACTOR = 0.2f;
+    
+    // **NEW: CALLBACK STORAGE**
+    std::unordered_map<std::string, std::function<void()>> actionCallbacks_;
     
     // **HELPER FUNCTIONS**
     void updateKeyState(int key, KeyState& state);

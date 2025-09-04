@@ -1,7 +1,19 @@
 // render_utils.cpp
 #include "render_utils.h"
+#include "math_utils.h"
+#include "ui_theme_optimized.h"
 #include <iostream>
 #include <cmath>
+
+// Local utility function for color fading
+Color fadeColor(Color color, float alpha) {
+    return Color{
+        static_cast<unsigned char>(color.r * alpha),
+        static_cast<unsigned char>(color.g * alpha),
+        static_cast<unsigned char>(color.b * alpha),
+        static_cast<unsigned char>(color.a * alpha)
+    };
+}
 
 void renderBuildingInterior(const Building& building) {
     // Simplified interior - just render floor and subtle ambient lighting
@@ -43,12 +55,7 @@ void renderNPC(const NPC& npc, Camera3D camera, float currentTime) {
     DrawCylinder(leftLegPos, 0.2f, 0.15f, 0.8f, 8, Fade(npc.color, 0.8f));
     DrawCylinder(rightLegPos, 0.2f, 0.15f, 0.8f, 8, Fade(npc.color, 0.8f));
 
-    Vector3 toNPC = {
-        npc.position.x - camera.position.x,
-        npc.position.y - camera.position.y,
-        npc.position.z - camera.position.z
-    };
-    float distance = sqrtf(toNPC.x * toNPC.x + toNPC.y * toNPC.y + toNPC.z * toNPC.z);
+    float distance = MathUtils::distance3D(npc.position, camera.position);
 
     if (distance <= npc.interactionRadius) {
         float pulse = 0.8f + sinf(currentTime * 6.0f) * 0.4f;
@@ -98,155 +105,208 @@ void renderProjectedLabels(Camera3D camera, const EnvironmentManager& environmen
     }
 }
 
-void renderUI(Camera3D camera, float currentTime, const GameState& state, bool testBuildingCollision) {
+void renderUI([[maybe_unused]] Camera3D camera, float currentTime, const GameState& state, bool testBuildingCollision) {
     int screenWidth = GetScreenWidth();
     int screenHeight = GetScreenHeight();
 
     if (!state.isInDialog && !state.mouseReleased) {
         int centerX = screenWidth / 2;
         int centerY = screenHeight / 2;
-        DrawLine(centerX - 10, centerY, centerX + 10, centerY, WHITE);
-        DrawLine(centerX, centerY - 10, centerX, centerY + 10, WHITE);
+        Color crosshairColor = UITypes::GetThemeColor(UITypes::ColorRole::ACCENT);
+        DrawLine(centerX - 10, centerY, centerX + 10, centerY, crosshairColor);
+        DrawLine(centerX, centerY - 10, centerX, centerY + 10, crosshairColor);
     } else if (state.isInDialog) {
         int centerX = screenWidth / 2;
         int centerY = screenHeight / 2;
-        DrawCircle(centerX, centerY, 8, Fade(WHITE, 0.5f));
-        DrawCircleLines(centerX, centerY, 8, WHITE);
-        DrawText("DIALOG", centerX - 25, centerY - 25, 10, YELLOW);
+        Color accentColor = UITypes::GetThemeColor(UITypes::ColorRole::ACCENT);
+        DrawCircle(centerX, centerY, 8, fadeColor(accentColor, 0.5f));
+        DrawCircleLines(centerX, centerY, 8, accentColor);
+        DrawText("DIALOG", centerX - 25, centerY - 25, 10, accentColor);
     } else if (state.mouseReleased) {
         int centerX = screenWidth / 2;
         int centerY = screenHeight / 2;
-        DrawRectangle(centerX - 60, centerY - 20, 120, 40, Fade(BLACK, 0.8f));
-        DrawRectangleLines(centerX - 60, centerY - 20, 120, 40, YELLOW);
-        DrawText("MOUSE FREE", centerX - 45, centerY - 15, 12, WHITE);
-        DrawText("ESC: RECAPTURE", centerX - 55, centerY + 2, 10, YELLOW);
+        Color bgColor = UITypes::GetThemeColor(UITypes::ColorRole::BACKGROUND);
+        Color accentColor = UITypes::GetThemeColor(UITypes::ColorRole::ACCENT);
+        Color textColor = UITypes::GetThemeColor(UITypes::ColorRole::TEXT_PRIMARY);
+
+        DrawRectangle(centerX - 60, centerY - 20, 120, 40, fadeColor(bgColor, 0.8f));
+        DrawRectangleLines(centerX - 60, centerY - 20, 120, 40, accentColor);
+        DrawText("MOUSE FREE", centerX - 45, centerY - 15, 12, textColor);
+        DrawText("ESC: RECAPTURE", centerX - 55, centerY + 2, 10, accentColor);
     }
 
     DrawFPS(10, 10);
 
     if (state.showInteractPrompt && !state.isInDialog) {
         float alpha = 0.8f + sinf(currentTime * 3.0f) * 0.1f;
-        DrawRectangle(5, 280, 400, 50, Fade(BLACK, alpha));
-        DrawRectangleLines(5, 280, 400, 50, YELLOW);
+        Color bgColor = UITypes::GetThemeColor(UITypes::ColorRole::BACKGROUND);
+        Color accentColor = UITypes::GetThemeColor(UITypes::ColorRole::ACCENT);
+        Color textColor = UITypes::GetThemeColor(UITypes::ColorRole::TEXT_PRIMARY);
 
-        DrawText(state.interactPromptText.c_str(), 15, 290, 14, YELLOW);
-        DrawText("[E] to interact", 15, 305, 12, WHITE);
+        DrawRectangle(5, 280, 400, 50, fadeColor(bgColor, alpha));
+        DrawRectangleLines(5, 280, 400, 50, accentColor);
 
-        DrawCircle(385, 305, 3, YELLOW);
+        DrawText(state.interactPromptText.c_str(), 15, 290, 14, accentColor);
+        DrawText("[E] to interact", 15, 305, 12, textColor);
+
+        DrawCircle(385, 305, 3, accentColor);
     }
 
-    DrawRectangle(5, 340, 300, 60, Fade(BLACK, 0.7f));
-    DrawRectangleLines(5, 340, 300, 60, BLUE);
-    DrawText("=== CONTROLS ===", 10, 345, 12, SKYBLUE);
-    DrawText("WASD: Move | Mouse: Look | Space: Jump", 10, 360, 10, LIGHTGRAY);
-    DrawText("LMB: Attack | E: Interact", 10, 375, 10, LIGHTGRAY);
+    // Controls panel with theme colors
+    {
+        Color bgColor = UITypes::GetThemeColor(UITypes::ColorRole::BACKGROUND);
+        Color borderColor = UITypes::GetThemeColor(UITypes::ColorRole::BORDER);
+        Color textPrimary = UITypes::GetThemeColor(UITypes::ColorRole::TEXT_PRIMARY);
+        Color textSecondary = UITypes::GetThemeColor(UITypes::ColorRole::TEXT_SECONDARY);
+
+        DrawRectangle(5, 340, 300, 60, fadeColor(bgColor, 0.7f));
+        DrawRectangleLines(5, 340, 300, 60, borderColor);
+        DrawText("=== CONTROLS ===", 10, 345, 12, textPrimary);
+        DrawText("WASD: Move | Mouse: Look | Space: Jump", 10, 360, 10, textSecondary);
+        DrawText("LMB: Attack | E: Interact", 10, 375, 10, textSecondary);
+    }
 
     if (testBuildingCollision) {
-        DrawRectangle(5, 405, 200, 25, Fade(RED, 0.8f));
-        DrawRectangleLines(5, 405, 200, 25, WHITE);
-        DrawText("⚠️  WALL COLLISION", 10, 410, 10, WHITE);
+        Color errorColor = UITypes::GetThemeColor(UITypes::ColorRole::ERROR);
+        Color textColor = UITypes::GetThemeColor(UITypes::ColorRole::TEXT_PRIMARY);
+
+        DrawRectangle(5, 405, 200, 25, fadeColor(errorColor, 0.8f));
+        DrawRectangleLines(5, 405, 200, 25, textColor);
+        DrawText("⚠️  WALL COLLISION", 10, 410, 10, textColor);
     }
 
-    Color mouseStateColor = state.mouseReleased ? ORANGE : GREEN;
+    // Mouse state indicator with theme colors
+    Color mouseStateColor = state.mouseReleased ?
+        UITypes::GetThemeColor(UITypes::ColorRole::WARNING) :
+        UITypes::GetThemeColor(UITypes::ColorRole::SUCCESS);
     const char* mouseStateText = state.mouseReleased ? "MOUSE FREE" : "MOUSE CAPTURED";
-    DrawRectangle(5, 430, 150, 20, Fade(mouseStateColor, 0.7f));
-    DrawRectangleLines(5, 430, 150, 20, WHITE);
-    DrawText(mouseStateText, 10, 432, 10, WHITE);
+    Color bgColor = UITypes::GetThemeColor(UITypes::ColorRole::BACKGROUND);
+    Color textColor = UITypes::GetThemeColor(UITypes::ColorRole::TEXT_PRIMARY);
+
+    DrawRectangle(5, 430, 150, 20, fadeColor(mouseStateColor, 0.7f));
+    DrawRectangleLines(5, 430, 150, 20, textColor);
+    DrawText(mouseStateText, 10, 432, 10, textColor);
 }
 
 void renderTestingPanel(const GameState& state, const std::string& locationText, Color locationColor) {
     int yOffset = 30;
 
-    DrawRectangle(5, 25, 500, 400, Fade(BLACK, 0.8f));
-    DrawRectangleLines(5, 25, 500, 400, BLUE);
+    // Use theme colors for consistent appearance
+    Color bgColor = UITypes::GetThemeColor(UITypes::ColorRole::BACKGROUND);
+    Color borderColor = UITypes::GetThemeColor(UITypes::ColorRole::BORDER);
+    Color textPrimary = UITypes::GetThemeColor(UITypes::ColorRole::TEXT_PRIMARY);
+    Color textSecondary = UITypes::GetThemeColor(UITypes::ColorRole::TEXT_SECONDARY);
+    Color accentColor = UITypes::GetThemeColor(UITypes::ColorRole::ACCENT);
+    Color successColor = UITypes::GetThemeColor(UITypes::ColorRole::SUCCESS);
+    Color warningColor = UITypes::GetThemeColor(UITypes::ColorRole::WARNING);
+    Color errorColor = UITypes::GetThemeColor(UITypes::ColorRole::ERROR);
 
-    DrawText("🎮 BROWSERWIND - FEATURE STATUS", 15, yOffset, 18, SKYBLUE);
+    DrawRectangle(5, 25, 500, 400, fadeColor(bgColor, 0.8f));
+    DrawRectangleLines(5, 25, 500, 400, borderColor);
+
+    DrawText("🎮 BROWSERWIND - FEATURE STATUS", 15, yOffset, 18, textPrimary);
     yOffset += 25;
 
-    DrawText("=== MOVEMENT & CONTROLS ===", 15, yOffset, 14, YELLOW);
+    DrawText("=== MOVEMENT & CONTROLS ===", 15, yOffset, 14, accentColor);
     yOffset += 18;
 
-    Color mouseColor = state.testMouseCaptured ? GREEN : RED;
+    Color mouseColor = state.testMouseCaptured ? successColor : errorColor;
     DrawText(TextFormat("🖱️  Mouse Capture: %s", state.testMouseCaptured ? "✓ WORKING" : "✗ BROKEN"), 20, yOffset, 12, mouseColor);
     yOffset += 15;
 
-    Color wasdColor = state.testWASDMovement ? GREEN : ORANGE;
+    Color wasdColor = state.testWASDMovement ? successColor : warningColor;
     DrawText(TextFormat("🏃 WASD Movement: %s", state.testWASDMovement ? "✓ TESTED" : "⏳ UNTESTED"), 20, yOffset, 12, wasdColor);
     yOffset += 15;
 
-    Color jumpColor = state.testSpaceJump ? GREEN : ORANGE;
+    Color jumpColor = state.testSpaceJump ? successColor : warningColor;
     DrawText(TextFormat("🦘 Space Jump: %s", state.testSpaceJump ? "✓ TESTED" : "⏳ UNTESTED"), 20, yOffset, 12, jumpColor);
     yOffset += 15;
 
-    Color lookColor = state.testMouseLook ? GREEN : ORANGE;
+    Color lookColor = state.testMouseLook ? successColor : warningColor;
     DrawText(TextFormat("👁️  Mouse Look: %s", state.testMouseLook ? "✓ TESTED" : "⏳ UNTESTED"), 20, yOffset, 12, lookColor);
     yOffset += 18;
 
-    DrawText("=== COMBAT SYSTEM ===", 15, yOffset, 14, YELLOW);
+    DrawText("=== COMBAT SYSTEM ===", 15, yOffset, 14, accentColor);
     yOffset += 18;
 
-    Color swingColor = state.testMeleeSwing ? GREEN : ORANGE;
+    Color swingColor = state.testMeleeSwing ? successColor : warningColor;
     DrawText(TextFormat("⚔️  Melee Attack: %s", state.testMeleeSwing ? "✓ TESTED" : "⏳ UNTESTED"), 20, yOffset, 12, swingColor);
     yOffset += 15;
 
-    Color hitColor = state.testMeleeHitDetection ? GREEN : ORANGE;
+    Color hitColor = state.testMeleeHitDetection ? successColor : warningColor;
     DrawText(TextFormat("Hit Detection: %s", state.testMeleeHitDetection ? "TESTED" : "UNTESTED"), 20, yOffset, 12, hitColor);
     yOffset += 18;
 
-    DrawText("=== WORLD INTERACTION ===", 15, yOffset, 14, YELLOW);
+    DrawText("=== WORLD INTERACTION ===", 15, yOffset, 14, accentColor);
     yOffset += 18;
 
-    Color buildingColor = state.testBuildingEntry ? GREEN : ORANGE;
+    Color buildingColor = state.testBuildingEntry ? successColor : warningColor;
     DrawText(TextFormat("🏛️  Building Entry: %s", state.testBuildingEntry ? "✓ TESTED" : "⏳ UNTESTED"), 20, yOffset, 12, buildingColor);
     yOffset += 15;
 
-    Color npcColor = state.testNPCInteraction ? GREEN : ORANGE;
+    Color npcColor = state.testNPCInteraction ? successColor : warningColor;
     DrawText(TextFormat("👥 NPC Dialog: %s", state.testNPCInteraction ? "✓ TESTED" : "⏳ UNTESTED"), 20, yOffset, 12, npcColor);
     yOffset += 18;
 
-    DrawText("=== SYSTEM STATUS ===", 15, yOffset, 14, YELLOW);
+    DrawText("=== SYSTEM STATUS ===", 15, yOffset, 14, accentColor);
     yOffset += 18;
 
-    Color mouseStateColor = state.mouseReleased ? ORANGE : GREEN;
+    Color mouseStateColor = state.mouseReleased ? warningColor : successColor;
     DrawText(TextFormat("🖱️  Mouse State: %s", state.mouseReleased ? "FREE" : "CAPTURED"), 20, yOffset, 12, mouseStateColor);
     yOffset += 15;
 
     DrawText(TextFormat("📍 Location: %s", locationText.c_str()), 20, yOffset, 12, locationColor);
     yOffset += 15;
 
-    Color dialogColor = state.isInDialog ? PURPLE : GRAY;
+    Color dialogColor = state.isInDialog ? UITypes::GetThemeColor(UITypes::ColorRole::INFO) : textSecondary;
     DrawText(TextFormat("💬 Dialog: %s", state.isInDialog ? "ACTIVE" : "INACTIVE"), 20, yOffset, 12, dialogColor);
     yOffset += 20;
 
-    DrawText("TEST ALL FEATURES:", 15, yOffset, 12, WHITE);
+    DrawText("TEST ALL FEATURES:", 15, yOffset, 12, textPrimary);
     yOffset += 15;
-    DrawText("   WASD + Mouse + Space + LMB + E", 20, yOffset, 10, LIGHTGRAY);
+    DrawText("   WASD + Mouse + Space + LMB + E", 20, yOffset, 10, textSecondary);
     yOffset += 15;
-    DrawText("   ESC: Close UI/Toggle mouse | I: Inventory", 20, yOffset, 10, LIGHTGRAY);
+    DrawText("   ESC: Close UI/Toggle mouse | I: Inventory", 20, yOffset, 10, textSecondary);
     yOffset += 20;
-    DrawText("📊 STATUS: 🟢 WORKING | 🟠 UNTESTED | 🔴 BROKEN", 15, yOffset, 10, GRAY);
+    DrawText("📊 STATUS: 🟢 WORKING | 🟠 UNTESTED | 🔴 BROKEN", 15, yOffset, 10, textSecondary);
 }
 
 void renderGameStats(const GameState& state) {
-    DrawRectangle(5, 450, 250, 100, Fade(BLACK, 0.8f));
-    DrawRectangleLines(5, 450, 250, 100, GREEN);
+    // Use theme colors for consistent appearance
+    Color bgColor = UITypes::GetThemeColor(UITypes::ColorRole::BACKGROUND);
+    Color borderColor = UITypes::GetThemeColor(UITypes::ColorRole::BORDER);
+    Color textPrimary = UITypes::GetThemeColor(UITypes::ColorRole::TEXT_PRIMARY);
+    Color textSecondary = UITypes::GetThemeColor(UITypes::ColorRole::TEXT_SECONDARY);
+    Color successColor = UITypes::GetThemeColor(UITypes::ColorRole::SUCCESS);
+    Color accentColor = UITypes::GetThemeColor(UITypes::ColorRole::ACCENT);
 
-    DrawText("📊 GAME STATISTICS", 15, 455, 16, LIME);
-    DrawText(TextFormat("🏆 Score: %d points", state.score), 20, 475, 12, WHITE);
-    DrawText(TextFormat("⚔️  Swings: %d", state.swingsPerformed), 20, 490, 12, WHITE);
-    DrawText(TextFormat("Hits: %d", state.meleeHits), 20, 505, 12, WHITE);
+    DrawRectangle(5, 450, 250, 100, fadeColor(bgColor, 0.8f));
+    DrawRectangleLines(5, 450, 250, 100, borderColor);
+
+    DrawText("📊 GAME STATISTICS", 15, 455, 16, textPrimary);
+    DrawText(TextFormat("🏆 Score: %d points", state.score), 20, 475, 12, textSecondary);
+    DrawText(TextFormat("⚔️  Swings: %d", state.swingsPerformed), 20, 490, 12, textSecondary);
+    DrawText(TextFormat("Hits: %d", state.meleeHits), 20, 505, 12, textSecondary);
     float accuracy = state.swingsPerformed > 0 ? (float)state.meleeHits / state.swingsPerformed * 100.0f : 0.0f;
-    DrawText(TextFormat("📈 Accuracy: %.1f%%", accuracy), 20, 520, 12, WHITE);
-    DrawText(TextFormat("🏢 Buildings: %d/2", state.testBuildingEntry ? 1 : 0), 20, 535, 12, BLUE);
+    DrawText(TextFormat("📈 Accuracy: %.1f%%", accuracy), 20, 520, 12, textSecondary);
+    DrawText(TextFormat("🏢 Buildings: %d/2", state.testBuildingEntry ? 1 : 0), 20, 535, 12, accentColor);
 }
 
 void renderDialogWindow(const GameState& state) {
-    DrawRectangle(30, 250, 540, 180, Fade(BLACK, 0.9f));
-    DrawRectangleLines(30, 250, 540, 180, WHITE);
+    // Use theme colors for consistent appearance
+    Color bgColor = UITypes::GetThemeColor(UITypes::ColorRole::BACKGROUND);
+    Color borderColor = UITypes::GetThemeColor(UITypes::ColorRole::BORDER);
+    Color textPrimary = UITypes::GetThemeColor(UITypes::ColorRole::TEXT_PRIMARY);
+    Color textSecondary = UITypes::GetThemeColor(UITypes::ColorRole::TEXT_SECONDARY);
+    Color accentColor = UITypes::GetThemeColor(UITypes::ColorRole::ACCENT);
+    Color hoverColor = UITypes::GetThemeColor(UITypes::ColorRole::HOVER);
 
-    DrawText("Conversation", 40, 260, 18, SKYBLUE);
+    DrawRectangle(30, 250, 540, 180, fadeColor(bgColor, 0.9f));
+    DrawRectangleLines(30, 250, 540, 180, borderColor);
 
-    DrawText(state.dialogText.c_str(), 40, 285, 14, WHITE);
+    DrawText("Conversation", 40, 260, 18, textPrimary);
+
+    DrawText(state.dialogText.c_str(), 40, 285, 14, textSecondary);
 
     const int buttonY = 320;
     const int buttonHeight = 30;
@@ -262,231 +322,31 @@ void renderDialogWindow(const GameState& state) {
         bool isHovered = (mousePos.y >= buttonY && mousePos.y <= buttonY + buttonHeight &&
                           mousePos.x >= buttonX && mousePos.x <= buttonX + buttonWidth);
 
-        Color buttonColor = Fade(BLUE, 0.7f);
+        Color buttonColor = fadeColor(accentColor, 0.7f);
         if (isHovered) {
-            buttonColor = Fade(SKYBLUE, 0.9f);
-            DrawRectangle(buttonX - 2, buttonY - 2, buttonWidth + 4, buttonHeight + 4, Fade(WHITE, 0.3f));
+            buttonColor = fadeColor(accentColor, 0.9f);
+            DrawRectangle(buttonX - 2, buttonY - 2, buttonWidth + 4, buttonHeight + 4, fadeColor(hoverColor, 0.3f));
         }
 
         DrawRectangle(buttonX, buttonY, buttonWidth, buttonHeight, buttonColor);
-        DrawRectangleLines(buttonX, buttonY, buttonWidth, buttonHeight, WHITE);
+        DrawRectangleLines(buttonX, buttonY, buttonWidth, buttonHeight, borderColor);
 
-        DrawText(state.dialogOptions[i].c_str(), buttonX + 10, buttonY + 8, 12, WHITE);
+        DrawText(state.dialogOptions[i].c_str(), buttonX + 10, buttonY + 8, 12, textPrimary);
 
         if (isHovered) {
-            DrawText(">", buttonX - 15, buttonY + 8, 12, YELLOW);
+            DrawText(">", buttonX - 15, buttonY + 8, 12, accentColor);
         }
     }
 
-    DrawText("Click on an option to continue", 40, 410, 12, LIGHTGRAY);
+    DrawText("Click on an option to continue", 40, 410, 12, textSecondary);
 
-    DrawText(TextFormat("Mouse: %.0f, %.0f", mousePos.x, mousePos.y), 400, 410, 10, YELLOW);
+    DrawText(TextFormat("Mouse: %.0f, %.0f", mousePos.x, mousePos.y), 400, 410, 10, accentColor);
 }
 
 void renderInventoryUI(const GameState& state) {
-    if (!state.inventorySystem) return;
-    
-    // **INTERACTIVE VISUAL INVENTORY** - Center of screen
-    int screenWidth = GetScreenWidth();
-    int screenHeight = GetScreenHeight();
-    int invWidth = 500;
-    int invHeight = 400;
-    int invX = (screenWidth - invWidth) / 2;
-    int invY = (screenHeight - invHeight) / 2;
-    
-    // Get mouse position for interaction
-    Vector2 mousePos = GetMousePosition();
-    bool mouseInInventory = (mousePos.x >= invX && mousePos.x <= invX + invWidth && 
-                           mousePos.y >= invY && mousePos.y <= invY + invHeight);
-    
-    // Background window
-    DrawRectangle(invX, invY, invWidth, invHeight, Fade(BLACK, 0.9f));
-    DrawRectangleLines(invX, invY, invWidth, invHeight, GOLD);
-    
-    // Title
-    DrawText("🎒 ADVENTURER'S INVENTORY [ID:7]", invX + 20, invY + 10, 18, GOLD);
-    
-    // Weight and slots info
-    auto& inventory = state.inventorySystem->getInventory();
-    DrawText(TextFormat("Weight: %.1f/%.0f kg", inventory.getCurrentWeight(), inventory.getMaxWeight()),
-             invX + 20, invY + 35, 14, inventory.isOverweight() ? RED : WHITE);
-    DrawText(TextFormat("Slots: %d/%d", inventory.getUsedSlots(), inventory.getMaxSlots()),
-             invX + 250, invY + 35, 14, inventory.isFull() ? RED : WHITE);
-    
-    // **INTERACTIVE ITEM LIST**
-    int yPos = invY + 60;
-    int itemCount = 0;
-    const int maxDisplayItems = 12;  // Limit display to prevent overflow
-    const int itemHeight = 18;  // Height of each item row
-    
-    DrawText("=== ITEMS ===", invX + 20, yPos, 14, YELLOW);
-    yPos += 25;
-    
-    std::shared_ptr<MysticalItem> hoveredItem = nullptr;
-    
-    for (const auto& item : inventory.getAllItems()) {
-        if (itemCount >= maxDisplayItems) break;
-        
-        // **MOUSE HOVER DETECTION**
-        Rectangle itemRect = {(float)(invX + 20), (float)yPos, 450.0f, (float)itemHeight};
-        bool isHovered = CheckCollisionPointRec(mousePos, itemRect) && mouseInInventory;
-        
-        // **HOVER HIGHLIGHTING**
-        if (isHovered) {
-            DrawRectangle(invX + 20, yPos - 2, 450, itemHeight + 4, Fade(YELLOW, 0.3f));
-            hoveredItem = item;  // Store for tooltip
-        }
-        
-        // **CLICK DETECTION**
-        if (isHovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            std::cout << "Clicked on item: " << item->getName() << std::endl;
-            // TODO: Add item interaction logic (equip/use/examine)
-        }
-        
-        // Item rarity color
-        Color itemColor = WHITE;
-        switch (item->getRarity()) {
-            case ItemRarity::UNCOMMON: itemColor = GREEN; break;
-            case ItemRarity::RARE: itemColor = BLUE; break;
-            case ItemRarity::EPIC: itemColor = PURPLE; break;
-            case ItemRarity::LEGENDARY: itemColor = ORANGE; break;
-            case ItemRarity::ARTIFACT: itemColor = RED; break;
-            default: itemColor = WHITE; break;
-        }
-        
-        std::string itemDisplay = item->getDisplayName();
-        if (itemDisplay.length() > 35) {
-            itemDisplay = itemDisplay.substr(0, 32) + "...";
-        }
-        
-        DrawText(itemDisplay.c_str(), invX + 25, yPos, 12, itemColor);
-        DrawText(TextFormat("%.1fkg %dg", item->getWeight() * item->getStackSize(), 
-                           ItemUtils::calculateItemValue(*item)), 
-                 invX + 350, yPos, 10, LIGHTGRAY);
-        
-        yPos += itemHeight;
-        itemCount++;
-    }
-    
-    if (inventory.getAllItems().size() > maxDisplayItems) {
-        DrawText(TextFormat("... and %zu more items", inventory.getAllItems().size() - maxDisplayItems),
-                 invX + 25, yPos, 10, GRAY);
-    }
-    
-    // Equipment section
-    yPos = invY + 220;
-    DrawText("=== EQUIPPED GEAR ===", invX + 20, yPos, 14, YELLOW);
-    yPos += 25;
-    
-    auto& equipment = state.inventorySystem->getEquipment();
-    auto totalStats = equipment.getTotalStats();
-    
-    DrawText(TextFormat("⚔️ Total Damage: +%d", totalStats.damage), invX + 25, yPos, 12, totalStats.damage > 0 ? GREEN : GRAY);
-    yPos += 18;
-    DrawText(TextFormat("🛡️ Total Armor: +%d", totalStats.armor), invX + 25, yPos, 12, totalStats.armor > 0 ? GREEN : GRAY);
-    yPos += 18;
-    DrawText(TextFormat("Health Bonus: +%d", totalStats.health), invX + 25, yPos, 12, totalStats.health > 0 ? GREEN : GRAY);
-    yPos += 18;
-    DrawText(TextFormat("Mana Bonus: +%d", totalStats.mana), invX + 25, yPos, 12, totalStats.mana > 0 ? BLUE : GRAY);
-    
-    // Equipment slots display
-    int equipY = invY + 60;
-    DrawText("=== EQUIPMENT SLOTS ===", invX + 280, equipY, 12, YELLOW);
-    equipY += 20;
-    
-    // Show key equipment slots
-    auto mainHand = equipment.getEquippedItem(EquipmentSlot::MAIN_HAND);
-    auto chest = equipment.getEquippedItem(EquipmentSlot::CHEST);
-    auto feet = equipment.getEquippedItem(EquipmentSlot::FEET);
-    
-    DrawText(TextFormat("Main Hand: %s", mainHand ? mainHand->getName().c_str() : "[Empty]"),
-             invX + 285, equipY, 10, mainHand ? GREEN : GRAY);
-    equipY += 15;
-    DrawText(TextFormat("Chest: %s", chest ? chest->getName().c_str() : "[Empty]"),
-             invX + 285, equipY, 10, chest ? GREEN : GRAY);
-    equipY += 15;
-    DrawText(TextFormat("Feet: %s", feet ? feet->getName().c_str() : "[Empty]"),
-             invX + 285, equipY, 10, feet ? GREEN : GRAY);
-    
-    // **ITEM TOOLTIP** - Show detailed info when hovering
-    if (hoveredItem) {
-        // Tooltip window
-        int tooltipWidth = 300;
-        int tooltipHeight = 150;
-        int tooltipX = mousePos.x + 15;  // Offset from mouse
-        int tooltipY = mousePos.y - tooltipHeight - 10;
-        
-        // Keep tooltip on screen
-        if (tooltipX + tooltipWidth > screenWidth) tooltipX = mousePos.x - tooltipWidth - 15;
-        if (tooltipY < 0) tooltipY = mousePos.y + 20;
-        
-        // Tooltip background
-        DrawRectangle(tooltipX, tooltipY, tooltipWidth, tooltipHeight, Fade(BLACK, 0.95f));
-        DrawRectangleLines(tooltipX, tooltipY, tooltipWidth, tooltipHeight, WHITE);
-        
-        // Item name with rarity color
-        Color nameColor = WHITE;
-        switch (hoveredItem->getRarity()) {
-            case ItemRarity::UNCOMMON: nameColor = GREEN; break;
-            case ItemRarity::RARE: nameColor = BLUE; break;
-            case ItemRarity::EPIC: nameColor = PURPLE; break;
-            case ItemRarity::LEGENDARY: nameColor = ORANGE; break;
-            case ItemRarity::ARTIFACT: nameColor = RED; break;
-            default: nameColor = WHITE; break;
-        }
-        
-        DrawText(hoveredItem->getName().c_str(), tooltipX + 10, tooltipY + 10, 14, nameColor);
-        DrawText(TextFormat("[%s]", ItemUtils::rarityToString(hoveredItem->getRarity()).c_str()), 
-                 tooltipX + 10, tooltipY + 25, 10, nameColor);
-        
-        // Item stats
-        int tooltipYPos = tooltipY + 45;
-        DrawText(TextFormat("Weight: %.1f kg", hoveredItem->getWeight()), tooltipX + 10, tooltipYPos, 10, WHITE);
-        tooltipYPos += 15;
-        DrawText(TextFormat("Value: %d gold", ItemUtils::calculateItemValue(*hoveredItem)), 
-                 tooltipX + 10, tooltipYPos, 10, GOLD);
-        tooltipYPos += 15;
-        
-        // Type-specific info
-        if (hoveredItem->getType() == ItemType::WEAPON) {
-            auto weapon = std::dynamic_pointer_cast<EnchantedWeapon>(hoveredItem);
-            if (weapon) {
-                DrawText(TextFormat("Damage: %d", weapon->getStats().damage), tooltipX + 10, tooltipYPos, 10, RED);
-                tooltipYPos += 15;
-                DrawText(TextFormat("Durability: %.0f/%.0f", weapon->getDurability(), weapon->getMaxDurability()), 
-                         tooltipX + 10, tooltipYPos, 10, weapon->isBroken() ? RED : GREEN);
-            }
-        } else if (hoveredItem->getType() == ItemType::ARMOR) {
-            auto armor = std::dynamic_pointer_cast<GuardianArmor>(hoveredItem);
-            if (armor) {
-                DrawText(TextFormat("Armor: %d", armor->getStats().armor), tooltipX + 10, tooltipYPos, 10, BLUE);
-                tooltipYPos += 15;
-                DrawText(TextFormat("Durability: %.0f/%.0f", armor->getDurability(), armor->getMaxDurability()), 
-                         tooltipX + 10, tooltipYPos, 10, armor->isBroken() ? RED : GREEN);
-            }
-        } else if (hoveredItem->getType() == ItemType::CONSUMABLE) {
-            auto potion = std::dynamic_pointer_cast<AlchemicalPotion>(hoveredItem);
-            if (potion) {
-                auto effects = potion->getEffects();
-                if (effects.health > 0) {
-                    DrawText(TextFormat("Restores: %d HP", effects.health), tooltipX + 10, tooltipYPos, 10, GREEN);
-                    tooltipYPos += 15;
-                }
-                if (effects.mana > 0) {
-                    DrawText(TextFormat("Restores: %d MP", effects.mana), tooltipX + 10, tooltipYPos, 10, BLUE);
-                }
-            }
-        }
-        
-        // Description
-        if (!hoveredItem->getDescription().empty()) {
-            DrawText("Description:", tooltipX + 10, tooltipY + tooltipHeight - 35, 10, YELLOW);
-            DrawText(hoveredItem->getDescription().c_str(), tooltipX + 10, tooltipY + tooltipHeight - 20, 9, LIGHTGRAY);
-        }
-    }
-    
-    // Controls help - Simple and clear
-    DrawText("Click: Equip/Use items | Hover: Item details | Press I to close", invX + 20, invY + invHeight - 25, 12, GREEN);
+    // Use the new component-based inventory UI system
+    extern void renderInventoryComponent(const GameState& state);
+    renderInventoryComponent(state);
 }
 
 void renderPlayerStatsUI(const GameState& state) {
@@ -495,38 +355,45 @@ void renderPlayerStatsUI(const GameState& state) {
     int statsY = 180;  // Below existing UI
     int statsWidth = 200;
     int statsHeight = 120;
-    
-    DrawRectangle(statsX, statsY, statsWidth, statsHeight, Fade(DARKBLUE, 0.8f));
-    DrawRectangleLines(statsX, statsY, statsWidth, statsHeight, SKYBLUE);
-    
-    DrawText("PLAYER STATUS", statsX + 10, statsY + 5, 14, SKYBLUE);
-    
+
+    // Use theme colors for consistent appearance
+    Color bgColor = UITypes::GetThemeColor(UITypes::ColorRole::BACKGROUND);
+    Color borderColor = UITypes::GetThemeColor(UITypes::ColorRole::BORDER);
+    Color textPrimary = UITypes::GetThemeColor(UITypes::ColorRole::TEXT_PRIMARY);
+    Color healthColor = UITypes::GetThemeColor(UITypes::ColorRole::HEALTH);
+    Color manaColor = UITypes::GetThemeColor(UITypes::ColorRole::MANA);
+    Color experienceColor = UITypes::GetThemeColor(UITypes::ColorRole::EXPERIENCE);
+
+    DrawRectangle(statsX, statsY, statsWidth, statsHeight, fadeColor(bgColor, 0.8f));
+    DrawRectangleLines(statsX, statsY, statsWidth, statsHeight, borderColor);
+
+    DrawText("PLAYER STATUS", statsX + 10, statsY + 5, 14, textPrimary);
+
     // Health bar
     float healthPercent = (float)state.playerHealth / state.maxPlayerHealth;
-    Color healthColor = healthPercent > 0.6f ? GREEN : (healthPercent > 0.3f ? YELLOW : RED);
-    DrawText(TextFormat("HP: %d/%d", state.playerHealth, state.maxPlayerHealth), 
+    DrawText(TextFormat("HP: %d/%d", state.playerHealth, state.maxPlayerHealth),
              statsX + 10, statsY + 25, 12, healthColor);
-    DrawRectangle(statsX + 10, statsY + 40, 180, 8, DARKGRAY);
+    DrawRectangle(statsX + 10, statsY + 40, 180, 8, fadeColor(bgColor, 0.6f));
     DrawRectangle(statsX + 10, statsY + 40, (int)(180 * healthPercent), 8, healthColor);
-    
+
     // Mana bar
     float manaPercent = (float)state.playerMana / state.maxPlayerMana;
-    Color manaColor = manaPercent > 0.6f ? BLUE : (manaPercent > 0.3f ? SKYBLUE : PURPLE);
-    DrawText(TextFormat("MP: %d/%d", state.playerMana, state.maxPlayerMana), 
+    DrawText(TextFormat("MP: %d/%d", state.playerMana, state.maxPlayerMana),
              statsX + 10, statsY + 55, 12, manaColor);
-    DrawRectangle(statsX + 10, statsY + 70, 180, 8, DARKGRAY);
+    DrawRectangle(statsX + 10, statsY + 70, 180, 8, fadeColor(bgColor, 0.6f));
     DrawRectangle(statsX + 10, statsY + 70, (int)(180 * manaPercent), 8, manaColor);
-    
+
     // Level and experience
-    DrawText(TextFormat("Level %d", state.playerLevel), statsX + 10, statsY + 85, 12, GOLD);
-    DrawText(TextFormat("XP: %d", state.playerExperience), statsX + 100, statsY + 85, 12, YELLOW);
-    
+    DrawText(TextFormat("Level %d", state.playerLevel), statsX + 10, statsY + 85, 12, experienceColor);
+    DrawText(TextFormat("XP: %d", state.playerExperience), statsX + 100, statsY + 85, 12, experienceColor);
+
     // Equipment bonuses (if any)
     if (state.inventorySystem) {
         auto totalStats = state.inventorySystem->getTotalBonuses();
         if (totalStats.damage > 0 || totalStats.armor > 0) {
-            DrawText(TextFormat("DMG+%d ARM+%d", totalStats.damage, totalStats.armor), 
-                     statsX + 10, statsY + 100, 10, GREEN);
+            Color successColor = UITypes::GetThemeColor(UITypes::ColorRole::SUCCESS);
+            DrawText(TextFormat("DMG+%d ARM+%d", totalStats.damage, totalStats.armor),
+                     statsX + 10, statsY + 100, 10, successColor);
         }
     }
 }
@@ -567,37 +434,47 @@ void printFinalSummary(const GameState& state) {
 
 void renderEscMenu(GameState& state) {  // **NON-CONST** to update selectedMenuOption
     if (!state.showEscMenu) return;
-    
+
     // **FULL SCREEN OVERLAY** - Dark background
     int screenWidth = GetScreenWidth();
     int screenHeight = GetScreenHeight();
-    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.7f));
-    
+
+    // Use theme colors for consistent appearance
+    Color bgColor = UITypes::GetThemeColor(UITypes::ColorRole::BACKGROUND);
+    Color surfaceColor = UITypes::GetThemeColor(UITypes::ColorRole::SURFACE);
+    Color borderColor = UITypes::GetThemeColor(UITypes::ColorRole::BORDER);
+    Color textPrimary = UITypes::GetThemeColor(UITypes::ColorRole::TEXT_PRIMARY);
+    Color textSecondary = UITypes::GetThemeColor(UITypes::ColorRole::TEXT_SECONDARY);
+    Color accentColor = UITypes::GetThemeColor(UITypes::ColorRole::ACCENT);
+    Color warningColor = UITypes::GetThemeColor(UITypes::ColorRole::WARNING);
+
+    DrawRectangle(0, 0, screenWidth, screenHeight, fadeColor(bgColor, 0.7f));
+
     // **CENTERED MENU WINDOW**
     int menuWidth = 400;
     int menuHeight = 300;
     int menuX = (screenWidth - menuWidth) / 2;
     int menuY = (screenHeight - menuHeight) / 2;
-    
+
     // Menu background
-    DrawRectangle(menuX, menuY, menuWidth, menuHeight, DARKBLUE);
-    DrawRectangleLines(menuX, menuY, menuWidth, menuHeight, SKYBLUE);
-    
+    DrawRectangle(menuX, menuY, menuWidth, menuHeight, fadeColor(surfaceColor, 0.9f));
+    DrawRectangleLines(menuX, menuY, menuWidth, menuHeight, borderColor);
+
     // **TITLE**
-    DrawText("= BROWSERWIND PAUSED = [ID:8]", menuX + 80, menuY + 20, 20, SKYBLUE);
+    DrawText("= BROWSERWIND PAUSED = [ID:8]", menuX + 80, menuY + 20, 20, textPrimary);
     
     // **MENU OPTIONS WITH MOUSE HOVER DETECTION**
     const char* menuOptions[] = {"Resume Game", "Save Game", "Load Game", "Quit Game"};
     int optionY = menuY + 80;
     int optionSpacing = 50;
     Vector2 mousePos = GetMousePosition();
-    
+
     // **DETECT HOVERED OPTION** - Update selection based on mouse position
     int hoveredOption = -1;
     for (int i = 0; i < 4; i++) {
         int buttonY = optionY + i * optionSpacing - 5;
         int buttonHeight = 40;
-        
+
         if (mousePos.x >= menuX + 20 && mousePos.x <= menuX + menuWidth - 20 &&
             mousePos.y >= buttonY && mousePos.y <= buttonY + buttonHeight) {
             hoveredOption = i;
@@ -605,25 +482,25 @@ void renderEscMenu(GameState& state) {  // **NON-CONST** to update selectedMenuO
             break;
         }
     }
-    
+
     for (int i = 0; i < 4; i++) {
         bool isSelected = (i == state.selectedMenuOption);
-        Color optionColor = isSelected ? YELLOW : WHITE;
-        Color bgColor = isSelected ? Fade(YELLOW, 0.3f) : Fade(GRAY, 0.1f);
-        
+        Color optionColor = isSelected ? accentColor : textPrimary;
+        Color buttonBgColor = isSelected ? fadeColor(accentColor, 0.3f) : fadeColor(surfaceColor, 0.1f);
+
         // **ENHANCED HIGHLIGHT** for hovered/selected option
         if (isSelected) {
-            DrawRectangle(menuX + 15, optionY + i * optionSpacing - 8, menuWidth - 30, 44, bgColor);
-            DrawRectangleLines(menuX + 15, optionY + i * optionSpacing - 8, menuWidth - 30, 44, YELLOW);
+            DrawRectangle(menuX + 15, optionY + i * optionSpacing - 8, menuWidth - 30, 44, buttonBgColor);
+            DrawRectangleLines(menuX + 15, optionY + i * optionSpacing - 8, menuWidth - 30, 44, accentColor);
         }
-        
+
         // **OPTION TEXT WITH HOVER EFFECT**
         const char* prefix = isSelected ? "> " : "  ";
         int fontSize = isSelected ? 20 : 18;  // **BIGGER TEXT** when hovered
-        DrawText(TextFormat("%s%s", prefix, menuOptions[i]), 
+        DrawText(TextFormat("%s%s", prefix, menuOptions[i]),
                  menuX + 40, optionY + i * optionSpacing, fontSize, optionColor);
     }
-    
+
     // **DYNAMIC CONTROLS HELP**
     if (hoveredOption >= 0) {
         const char* hoverHints[] = {
@@ -632,8 +509,8 @@ void renderEscMenu(GameState& state) {  // **NON-CONST** to update selectedMenuO
             "Click to load your saved progress!",
             "Click to exit Browserwind!"
         };
-        DrawText(hoverHints[hoveredOption], menuX + 30, menuY + menuHeight - 40, 12, YELLOW);
+        DrawText(hoverHints[hoveredOption], menuX + 30, menuY + menuHeight - 40, 12, accentColor);
     } else {
-        DrawText("Hover over options to see details | Click to select | ESC to resume", menuX + 30, menuY + menuHeight - 40, 12, LIGHTGRAY);
+        DrawText("Hover over options to see details | Click to select | ESC to resume", menuX + 30, menuY + menuHeight - 40, 12, textSecondary);
     }
 }
