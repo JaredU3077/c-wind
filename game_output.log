@@ -1,4 +1,5 @@
-Starting Browserwind main function...
+Enhanced Input Manager initialized with default key bindings
+Starting Browserwind game initialization...
 WARNING: GLFW: Failed to find selected monitor
 WARNING: GLFW: Failed to find selected monitor
 Display size: 0x0
@@ -18,7 +19,7 @@ INFO:     > rmodels:... loaded (optional)
 INFO:     > raudio:.... loaded (optional)
 INFO: DISPLAY: Trying to enable VSYNC
 INFO: DISPLAY: Device initialized successfully
-INFO:     > Display size: 1920 x 1080
+INFO:     > Display size: 2560 x 1440
 INFO:     > Screen size:  800 x 600
 INFO:     > Render size:  800 x 600
 INFO:     > Viewport offsets: 0, 0
@@ -50,15 +51,14 @@ Window initialized successfully
 Window management complete - window should be visible now
 Waiting 2 seconds for window to appear...
 Loading complete, proceeding with game...
+INFO: TIMER: Target time per frame: 16.667 milliseconds
+Target FPS set to 60
 Setting up first-person camera...
 First-person camera setup complete
 Setting up input manager...
-Input manager setup complete - mouse captured for FPS controls
-Setting target FPS...
-INFO: TIMER: Target time per frame: 33.333 milliseconds
-Target FPS set to 30
-Initializing game state...
 Enhanced Input Manager initialized with default key bindings
+Input manager setup complete - mouse captured for FPS controls
+Initializing game state...
 Game state initialized
 Initializing inventory system...
 Equipped Rusty Dagger in Main Hand
@@ -67,277 +67,60 @@ Equipped Worn Boots in Feet
 Starting inventory loaded with diverse adventuring gear and magical items!
 Inventory system initialized with starting gear
 Adding state change listener...
-State change listener skipped for debugging
-Skipping state validation for debugging...
-State validation skipped
+State changed: validated
+Performance monitoring system initialized
+UI Theme system initialized: SUCCESS
+UI System Manager initialized
+UI system initialized successfully
 Re-enabling EnvironmentManager...
 EnvironmentManager created successfully
 Initializing world...
-Added object: Mayor's Building at (0.0, 2.5, -12.0), collidable: 1
-Added object: Shop Keeper's Building at (12.0, 2.5, 0.0), collidable: 1
-Added object: Town Well at (0.0, 0.0, 0.0), collidable: 1
-Added object: Tree at (-15.0, 0.0, -10.0), collidable: 1
-Added object: Tree at (15.0, 0.0, -10.0), collidable: 1
-ENVIRONMENT: Rebuilding spatial grid with 5 objects
+WorldBuilder: Starting complete town world initialization...
+Added object: Mayor's Office at (-12.0, 2.5, 0.0), collidable: 1
+WorldBuilder: Created Mayor's Office building
+Added object: General Store at (0.0, 2.5, 12.0), collidable: 1
+WorldBuilder: Created General Store building
+Added object: Town Well at (0.0, 1.2, 0.0), collidable: 1
+WorldBuilder: Created Central Well
+Added object: Tree at (-8.0, 0.0, -8.0), collidable: 1
+Added object: Tree at (8.0, 0.0, -8.0), collidable: 1
+Added object: Tree at (-8.0, 0.0, 8.0), collidable: 1
+Added object: Tree at (8.0, 0.0, 8.0), collidable: 1
+Added object: Tree at (-12.0, 0.0, 0.0), collidable: 1
+Added object: Tree at (12.0, 0.0, 0.0), collidable: 1
+WorldBuilder: Created 6 trees around town
+WorldBuilder: Complete town world initialization finished successfully!
+WorldBuilder: Created buildings, well, and environmental objects
 World initialized successfully
 Initializing combat system...
 Combat system initialized successfully
 Initializing NPCs...
 NPC system initialized successfully
 All systems initialized successfully!
-Performance monitoring system initialized
-UI system initialized successfully
-Optimized theme system initialized successfully
-Theme system initialized successfully
-Notification system initialized successfully
-Animation system initialized successfully
-INFO: AUDIO: Device initialized successfully
-INFO:     > Backend:       miniaudio | Core Audio
-INFO:     > Format:        32-bit IEEE Floating Point -> 32-bit IEEE Floating Point
-INFO:     > Channels:      2 -> 2
-INFO:     > Sample rate:   44100 -> 44100
-INFO:     > Periods size:  1323
-UI Audio system initialized successfully
-WARNING: FILEIO: [assets/sounds/ui_click.wav] Failed to open file
-Warning: Failed to load sound effect: assets/sounds/ui_click.wav
-WARNING: FILEIO: [assets/sounds/ui_hover.wav] Failed to open file
-Warning: Failed to load sound effect: assets/sounds/ui_hover.wav
-WARNING: FILEIO: [assets/sounds/ui_open.wav] Failed to open file
-Warning: Failed to load sound effect: assets/sounds/ui_open.wav
-WARNING: FILEIO: [assets/sounds/ui_close.wav] Failed to open file
-Warning: Failed to load sound effect: assets/sounds/ui_close.wav
-WARNING: FILEIO: [assets/sounds/ui_success.wav] Failed to open file
-Warning: Failed to load sound effect: assets/sounds/ui_success.wav
-WARNING: FILEIO: [assets/sounds/ui_error.wav] Failed to open file
-Warning: Failed to load sound effect: assets/sounds/ui_error.wav
-WARNING: FILEIO: [assets/sounds/ui_notification.wav] Failed to open file
-Warning: Failed to load sound effect: assets/sounds/ui_notification.wav
-WARNING: FILEIO: [assets/sounds/menu_ambient.ogg] Music file could not be opened
-Warning: Failed to load music track: assets/sounds/menu_ambient.ogg
-WARNING: FILEIO: [assets/sounds/game_ambient.ogg] Music file could not be opened
-Warning: Failed to load music track: assets/sounds/game_ambient.ogg
-Audio system initialized successfully
-[GENERAL] setupSignalHandlers  (debug_system.cpp:53) Signal handlers installed for crash detection
-[GENERAL] initialize           (debug_system.cpp:155) Debug system initialized
-[GENERAL] initialize           (debug_system.cpp:156) Debug level: 2
-[GENERAL] initialize           (debug_system.cpp:157) Verbose logging: OFF
-[GENERAL] initializeDebugSystem (debug_system.cpp:424) Debug system fully initialized
-[GENERAL] setDebugMode         (debug_system.cpp:430) Debug mode ENABLED
-[GENERAL] setVerboseLogging    (debug_system.cpp:436) Verbose logging ENABLED
-[GENERAL] setupSignalHandlers  (debug_system.cpp:53) Signal handlers installed for crash detection
-Signal handlers installed for crash detection
-Debug system initialized successfully
-Initializing SIMPLE inventory system (nuclear option)...
-initializeSimpleInventory() called
-SimpleInventory created successfully
-SimpleInventory initialized successfully
-Simple inventory system initialized successfully
-Starting main game loop...
-Window ready check: 1
-Window should close check: 0
-Starting main game loop...
-[GENERAL] main                 (main.cpp:542) Game loop iteration: 0
-TAB DEBUG: Key=258, Found=0, Pressed=0
-[GENERAL] processInput         (main.cpp:123) Executing: g_simpleInventory->handleInput()
-[GENERAL] processInput         (main.cpp:123) Completed: g_simpleInventory->handleInput()
-[GENERAL] renderGame           (main.cpp:292) Executing: g_uiSystem->renderAllUI()
-DEBUG: PanelStyle::getDefault() called
-DEBUG: Background color: (25, 30, 45)
-DEBUG: Border color: (25, 30, 45)
-Attempting to load font: assets/fonts/medieval_header.ttf
-WARNING: FILEIO: [assets/fonts/medieval_header.ttf] Failed to read file
-Warning: Font loading failed for 'assets/fonts/medieval_header.ttf' (invalid texture or size). Using default font.
-Attempting to load font: assets/fonts/medieval_body.ttf
-WARNING: FILEIO: [assets/fonts/medieval_body.ttf] Failed to read file
-Warning: Font loading failed for 'assets/fonts/medieval_body.ttf' (invalid texture or size). Using default font.
-Attempting to load font: assets/fonts/medieval_ui.ttf
-WARNING: FILEIO: [assets/fonts/medieval_ui.ttf] Failed to read file
-Warning: Font loading failed for 'assets/fonts/medieval_ui.ttf' (invalid texture or size). Using default font.
-[GENERAL] renderGame           (main.cpp:292) Completed: g_uiSystem->renderAllUI()
-[GENERAL] renderGame           (main.cpp:301) Executing: UINotification::NotificationManager::render()
-[GENERAL] renderGame           (main.cpp:301) Completed: UINotification::NotificationManager::render()
-CRITICAL: Frame time 127.232ms exceeded 25ms budget!
-[GENERAL] processInput         (main.cpp:123) Executing: g_simpleInventory->handleInput()
-[GENERAL] processInput         (main.cpp:123) Completed: g_simpleInventory->handleInput()
-[GENERAL] renderGame           (main.cpp:292) Executing: g_uiSystem->renderAllUI()
-DEBUG: PanelStyle::getDefault() called
-DEBUG: Background color: (25, 30, 45)
-DEBUG: Border color: (25, 30, 45)
-[GENERAL] renderGame           (main.cpp:292) Completed: g_uiSystem->renderAllUI()
-[GENERAL] renderGame           (main.cpp:301) Executing: UINotification::NotificationManager::render()
-[GENERAL] renderGame           (main.cpp:301) Completed: UINotification::NotificationManager::render()
-CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
-[GENERAL] processInput         (main.cpp:123) Executing: g_simpleInventory->handleInput()
-[GENERAL] processInput         (main.cpp:123) Completed: g_simpleInventory->handleInput()
-[GENERAL] renderGame           (main.cpp:292) Executing: g_uiSystem->renderAllUI()
-DEBUG: PanelStyle::getDefault() called
-DEBUG: Background color: (25, 30, 45)
-DEBUG: Border color: (25, 30, 45)
-[GENERAL] renderGame           (main.cpp:292) Completed: g_uiSystem->renderAllUI()
-[GENERAL] renderGame           (main.cpp:301) Executing: UINotification::NotificationManager::render()
-[GENERAL] renderGame           (main.cpp:301) Completed: UINotification::NotificationManager::render()
-[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.337000ms (Target: 16.67ms)
-CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
-[GENERAL] processInput         (main.cpp:123) Executing: g_simpleInventory->handleInput()
-[GENERAL] processInput         (main.cpp:123) Completed: g_simpleInventory->handleInput()
-[GENERAL] renderGame           (main.cpp:292) Executing: g_uiSystem->renderAllUI()
-DEBUG: PanelStyle::getDefault() called
-DEBUG: Background color: (25, 30, 45)
-DEBUG: Border color: (25, 30, 45)
-[GENERAL] renderGame           (main.cpp:292) Completed: g_uiSystem->renderAllUI()
-[GENERAL] renderGame           (main.cpp:301) Executing: UINotification::NotificationManager::render()
-[GENERAL] renderGame           (main.cpp:301) Completed: UINotification::NotificationManager::render()
-[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.539000ms (Target: 16.67ms)
-CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
-[GENERAL] processInput         (main.cpp:123) Executing: g_simpleInventory->handleInput()
-[GENERAL] processInput         (main.cpp:123) Completed: g_simpleInventory->handleInput()
-[GENERAL] renderGame           (main.cpp:292) Executing: g_uiSystem->renderAllUI()
-DEBUG: PanelStyle::getDefault() called
-DEBUG: Background color: (25, 30, 45)
-DEBUG: Border color: (25, 30, 45)
-[GENERAL] renderGame           (main.cpp:292) Completed: g_uiSystem->renderAllUI()
-[GENERAL] renderGame           (main.cpp:301) Executing: UINotification::NotificationManager::render()
-[GENERAL] renderGame           (main.cpp:301) Completed: UINotification::NotificationManager::render()
-CRITICAL: Frame time 33.3334ms exceeded 25ms budget!
-[GENERAL] processInput         (main.cpp:123) Executing: g_simpleInventory->handleInput()
-[GENERAL] processInput         (main.cpp:123) Completed: g_simpleInventory->handleInput()
-[GENERAL] renderGame           (main.cpp:292) Executing: g_uiSystem->renderAllUI()
-DEBUG: PanelStyle::getDefault() called
-DEBUG: Background color: (25, 30, 45)
-DEBUG: Border color: (25, 30, 45)
-[GENERAL] renderGame           (main.cpp:292) Completed: g_uiSystem->renderAllUI()
-[GENERAL] renderGame           (main.cpp:301) Executing: UINotification::NotificationManager::render()
-[GENERAL] renderGame           (main.cpp:301) Completed: UINotification::NotificationManager::render()
-[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.509000ms (Target: 16.67ms)
-CRITICAL: Frame time 33.3336ms exceeded 25ms budget!
-[GENERAL] processInput         (main.cpp:123) Executing: g_simpleInventory->handleInput()
-[GENERAL] processInput         (main.cpp:123) Completed: g_simpleInventory->handleInput()
-[GENERAL] renderGame           (main.cpp:292) Executing: g_uiSystem->renderAllUI()
-DEBUG: PanelStyle::getDefault() called
-DEBUG: Background color: (25, 30, 45)
-DEBUG: Border color: (25, 30, 45)
-[GENERAL] renderGame           (main.cpp:292) Completed: g_uiSystem->renderAllUI()
-[GENERAL] renderGame           (main.cpp:301) Executing: UINotification::NotificationManager::render()
-[GENERAL] renderGame           (main.cpp:301) Completed: UINotification::NotificationManager::render()
-CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
-[GENERAL] processInput         (main.cpp:123) Executing: g_simpleInventory->handleInput()
-[GENERAL] processInput         (main.cpp:123) Completed: g_simpleInventory->handleInput()
-[GENERAL] renderGame           (main.cpp:292) Executing: g_uiSystem->renderAllUI()
-DEBUG: PanelStyle::getDefault() called
-DEBUG: Background color: (25, 30, 45)
-DEBUG: Border color: (25, 30, 45)
-[GENERAL] renderGame           (main.cpp:292) Completed: g_uiSystem->renderAllUI()
-[GENERAL] renderGame           (main.cpp:301) Executing: UINotification::NotificationManager::render()
-[GENERAL] renderGame           (main.cpp:301) Completed: UINotification::NotificationManager::render()
-[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.349000ms (Target: 16.67ms)
-CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
-[GENERAL] processInput         (main.cpp:123) Executing: g_simpleInventory->handleInput()
-[GENERAL] processInput         (main.cpp:123) Completed: g_simpleInventory->handleInput()
-[GENERAL] renderGame           (main.cpp:292) Executing: g_uiSystem->renderAllUI()
-DEBUG: PanelStyle::getDefault() called
-DEBUG: Background color: (25, 30, 45)
-DEBUG: Border color: (25, 30, 45)
-[GENERAL] renderGame           (main.cpp:292) Completed: g_uiSystem->renderAllUI()
-[GENERAL] renderGame           (main.cpp:301) Executing: UINotification::NotificationManager::render()
-[GENERAL] renderGame           (main.cpp:301) Completed: UINotification::NotificationManager::render()
-CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
-[GENERAL] processInput         (main.cpp:123) Executing: g_simpleInventory->handleInput()
-[GENERAL] processInput         (main.cpp:123) Completed: g_simpleInventory->handleInput()
-[GENERAL] renderGame           (main.cpp:292) Executing: g_uiSystem->renderAllUI()
-DEBUG: PanelStyle::getDefault() called
-DEBUG: Background color: (25, 30, 45)
-DEBUG: Border color: (25, 30, 45)
-[GENERAL] renderGame           (main.cpp:292) Completed: g_uiSystem->renderAllUI()
-[GENERAL] renderGame           (main.cpp:301) Executing: UINotification::NotificationManager::render()
-[GENERAL] renderGame           (main.cpp:301) Completed: UINotification::NotificationManager::render()
-CRITICAL: Frame time 33.3337ms exceeded 25ms budget!
-[GENERAL] processInput         (main.cpp:123) Executing: g_simpleInventory->handleInput()
-[GENERAL] processInput         (main.cpp:123) Completed: g_simpleInventory->handleInput()
-[GENERAL] renderGame           (main.cpp:292) Executing: g_uiSystem->renderAllUI()
-DEBUG: PanelStyle::getDefault() called
-DEBUG: Background color: (25, 30, 45)
-DEBUG: Border color: (25, 30, 45)
-[GENERAL] renderGame           (main.cpp:292) Completed: g_uiSystem->renderAllUI()
-[GENERAL] renderGame           (main.cpp:301) Executing: UINotification::NotificationManager::render()
-[GENERAL] renderGame           (main.cpp:301) Completed: UINotification::NotificationManager::render()
-CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
-[GENERAL] processInput         (main.cpp:123) Executing: g_simpleInventory->handleInput()
-[GENERAL] processInput         (main.cpp:123) Completed: g_simpleInventory->handleInput()
-[GENERAL] renderGame           (main.cpp:292) Executing: g_uiSystem->renderAllUI()
-DEBUG: PanelStyle::getDefault() called
-DEBUG: Background color: (25, 30, 45)
-DEBUG: Border color: (25, 30, 45)
-[GENERAL] renderGame           (main.cpp:292) Completed: g_uiSystem->renderAllUI()
-[GENERAL] renderGame           (main.cpp:301) Executing: UINotification::NotificationManager::render()
-[GENERAL] renderGame           (main.cpp:301) Completed: UINotification::NotificationManager::render()
-[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.335000ms (Target: 16.67ms)
-CRITICAL: Frame time 33.3336ms exceeded 25ms budget!
-[GENERAL] processInput         (main.cpp:123) Executing: g_simpleInventory->handleInput()
-[GENERAL] processInput         (main.cpp:123) Completed: g_simpleInventory->handleInput()
-[GENERAL] renderGame           (main.cpp:292) Executing: g_uiSystem->renderAllUI()
-DEBUG: PanelStyle::getDefault() called
-DEBUG: Background color: (25, 30, 45)
-DEBUG: Border color: (25, 30, 45)
-[GENERAL] renderGame           (main.cpp:292) Completed: g_uiSystem->renderAllUI()
-[GENERAL] renderGame           (main.cpp:301) Executing: UINotification::NotificationManager::render()
-[GENERAL] renderGame           (main.cpp:301) Completed: UINotification::NotificationManager::render()
-CRITICAL: Frame time 33.3335ms exceeded 25ms budget!
-[GENERAL] processInput         (main.cpp:123) Executing: g_simpleInventory->handleInput()
-[GENERAL] processInput         (main.cpp:123) Completed: g_simpleInventory->handleInput()
-[GENERAL] renderGame           (main.cpp:292) Executing: g_uiSystem->renderAllUI()
-DEBUG: PanelStyle::getDefault() called
-DEBUG: Background color: (25, 30, 45)
-DEBUG: Border color: (25, 30, 45)
-[GENERAL] renderGame           (main.cpp:292) Completed: g_uiSystem->renderAllUI()
-[GENERAL] renderGame           (main.cpp:301) Executing: UINotification::NotificationManager::render()
-[GENERAL] renderGame           (main.cpp:301) Completed: UINotification::NotificationManager::render()
-[PERFORMANCE] endFrameProfile      (debug_system.cpp:271) SLOW FRAME: 33.854000ms (Target: 16.67ms)
-CRITICAL: Frame time 33.3337ms exceeded 25ms budget!
-[GENERAL] processInput         (main.cpp:123) Executing: g_simpleInventory->handleInput()
-[GENERAL] processInput         (main.cpp:123) Completed: g_simpleInventory->handleInput()
-[GENERAL] renderGame           (main.cpp:292) Executing: g_uiSystem->renderAllUI()
-DEBUG: PanelStyle::getDefault() called
-DEBUG: Background color: (25, 30, 45)
-DEBUG: Border color: (25, 30, 45)
-[GENERAL] renderGame           (main.cpp:292) Completed: g_uiSystem->renderAllUI()
-[GENERAL] renderGame           (main.cpp:301) Executing: UINotification::NotificationManager::render()
-[GENERAL] renderGame           (main.cpp:301) Completed: UINotification::NotificationManager::render()
-CRITICAL: Frame time 33.3345ms exceeded 25ms budget!
-[GENERAL] processInput         (main.cpp:123) Executing: g_simpleInventory->handleInput()
-[GENERAL] processInput         (main.cpp:123) Completed: g_simpleInventory->handleInput()
-[GENERAL] renderGame           (main.cpp:292) Executing: g_uiSystem->renderAllUI()
-DEBUG: PanelStyle::getDefault() called
-DEBUG: Background color: (25, 30, 45)
-DEBUG: Border color: (25, 30, 45)
-[GENERAL] renderGame           (main.cpp:292) Completed: g_uiSystem->renderAllUI()
-[GENERAL] renderGame           (main.cpp:301) Executing: UINotification::NotificationManager::render()
-[GENERAL] renderGame           (main.cpp:301) Completed: UINotification::NotificationManager::render()
-CRITICAL: Frame time 33.3336ms exceeded 25ms budget!
-[GENERAL] processInput         (main.cpp:123) Executing: g_simpleInventory->handleInput()
-[GENERAL] processInput         (main.cpp:123) Completed: g_simpleInventory->handleInput()
-[GENERAL] renderGame           (main.cpp:292) Executing: g_uiSystem->renderAllUI()
-DEBUG: PanelStyle::getDefault() called
-DEBUG: Background color: (25, 30, 45)
-DEBUG: Border color: (25, 30, 45)
-[GENERAL] renderGame           (main.cpp:292) Completed: g_uiSystem->renderAllUI()
-[GENERAL] renderGame           (main.cpp:301) Executing: UINotification::NotificationManager::render()
-[GENERAL] renderGame           (main.cpp:301) Completed: UINotification::NotificationManager::render()
-
-
-==========================================
-CRASH DETECTED! Signal: 15
-Last known location: Unknown
-==========================================
-
-=== DETAILED CALL STACK (10 frames) ===
-  [ 0] 0   Browserwind                         0x00000001048b1bfc _ZN13CrashReporter13dumpCallStackEv
-  [ 1] 1   Browserwind                         0x00000001048b157c _ZN13CrashReporter13signalHandlerEi
-  [ 2] 2   libsystem_platform.dylib            0x0000000191d716a4 _sigtramp
-  [ 3] 3   libsystem_c.dylib                   0x0000000191bd56f4 nanosleep
-  [ 4] 4   libsystem_c.dylib                   0x0000000191bd560c usleep
-  [ 5] 5   libraylib.5.5.0.dylib               0x0000000104ce26dc WaitTime
-  [ 6] 6   libraylib.5.5.0.dylib               0x0000000104ce1b4c EndDrawing
-  [ 7] 7   Browserwind                         0x000000010483f8d0 _Z10renderGameR9GameStateR8Camera3DR18EnvironmentManagerRK18NPCVisibilityStateP3NPCR18AdvancedFrameStats
-  [ 8] 8   Browserwind                         0x0000000104840c34 main
-  [ 9] 9   dyld                                0x0000000191996b98 start
-=== END CALL STACK ===
+Game loop iteration: 0, Window ready: 1
+Registered callback for action: pause
+Registered callback for action: testing_panel
+Registered callback for action: performance_toggle
+Registered callback for action: inventory
+Registered callback for action: quick_use
+Finished HandleInput
+Starting environment update
+Finished environment update
+Starting updateBuildingEntry
+Finished updateBuildingEntry
+Starting updateSwings
+Finished updateSwings
+Starting updateTargets
+Finished updateTargets
+Starting updatePlayer
+MOVEMENT ENABLED: Dialog=0, Inventory=0, EscMenu=0
+WASD Input: W=0, S=0, A=0, D=0
+Key Bindings: move_forward=87 (KEY_W=87), move_backward=83 (KEY_S=83)
+Raw Raylib Keys: W=0, S=0, A=0, D=0
+Enhanced Input: isActionDown(move_forward)=0, isKeyDown(KEY_W)=0
+Finished updatePlayer
+Starting handleInteractions
+Finished handleInteractions
+Starting ECS update placeholder
+Finished ECS update placeholder
+Starting renderSystem->renderAll

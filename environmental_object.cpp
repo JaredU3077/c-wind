@@ -22,12 +22,20 @@ void EnvironmentalObject::update(float deltaTime) {
 }
 
 void EnvironmentalObject::render([[maybe_unused]] const Camera3D& camera) {
-    if (auto renderComp = dynamic_cast<RenderComponent*>(getComponent("RenderComponent"))) {
-        // Apply position transformation before rendering
-        rlPushMatrix();
-        rlTranslatef(position.x, position.y, position.z);
-        renderComp->render(camera);
-        rlPopMatrix();
+    auto* component = getComponent("RenderComponent");
+    if (component) {
+        auto renderComp = dynamic_cast<RenderComponent*>(component);
+        if (renderComp) {
+            // Apply position transformation before rendering
+            rlPushMatrix();
+            rlTranslatef(position.x, position.y, position.z);
+            renderComp->render(camera);
+            rlPopMatrix();
+        } else {
+            std::cerr << "ERROR: Component '" << component->getTypeName() << "' is not a RenderComponent for object '" << getName() << "'" << std::endl;
+        }
+    } else {
+        std::cerr << "WARNING: No RenderComponent found for object '" << getName() << "'" << std::endl;
     }
 }
 

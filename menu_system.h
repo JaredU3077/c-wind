@@ -8,12 +8,12 @@ class MenuSystem {
 public:
     MenuSystem(GameState& state);
     void handleEscMenuInput();
-    void handleInventoryInput(const std::unique_ptr<InventorySystem>& inventorySystem);
+    void handleInventoryInput(InventorySystem& inventorySystem);
 
 private:
     GameState& state_;
     void handleEscMenuClick();
-    void handleInventoryClick(const std::unique_ptr<InventorySystem>& inventorySystem);
+    void handleInventoryClick(InventorySystem& inventorySystem);
 };
 
 #endif

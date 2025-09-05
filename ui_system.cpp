@@ -2,7 +2,7 @@
 #include "ui_system.h"
 #include "ui_theme_optimized.h"
 #include "render_utils.h"
-#include "performance.h"
+#include "performance_system.h"
 #include "debug_system.h"
 #include <iostream>
 #include <cmath>

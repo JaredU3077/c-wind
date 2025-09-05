@@ -39,8 +39,6 @@ void EnvironmentManager::update(float deltaTime, const Camera3D& camera) {
 
 void EnvironmentManager::renderAll(const Camera3D& camera) {
     for (auto& obj : objects) {
-        // Skip culled objects based on LOD
-        // Note: Assuming objects have a way to check LOD or modify render based on it; expand as needed
         obj->render(camera);
     }
 }

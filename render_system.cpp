@@ -5,7 +5,7 @@
 
 extern NPC npcs[MAX_NPCS];  // From npc.cpp
 
-RenderSystem::RenderSystem(GameState& state, EnvironmentManager& environment, AdvancedFrameStats& performanceStats)
+RenderSystem::RenderSystem(GameState& state, EnvironmentManager& environment, SimplePerformanceStats& performanceStats)
     : state_(state), environment_(environment), performanceStats_(performanceStats) {}
 
 void RenderSystem::renderAll(const Camera3D& camera, float time) {
@@ -30,7 +30,7 @@ void RenderSystem::render3DWorld(const Camera3D& camera, float time) {
     }
     DrawPlane({0.0f, 0.0f, 0.0f}, {16.0f, 16.0f}, groundColor);
 
-    // Render environment
+    // Re-enable environment rendering
     environment_.renderAll(camera);
 
     // Render NPCs
@@ -96,14 +96,17 @@ void RenderSystem::render2DOverlays(const Camera3D& camera, float time) {
         DrawText(jumpText.c_str(), 10, 160, 16, WHITE);
     }
 
+    // TEMPORARILY DISABLE UI SYSTEM TO ISOLATE CRASH
+    /*
     // UI system
     {
-        PROFILE_SYSTEM(performanceStats_, ui);
+        // PROFILE_SYSTEM(performanceStats_, ui); // TEMPORARILY DISABLED
         g_uiSystem->renderAllUI(camera, state_, time);
     }
+    */
 
     // Performance overlay
-    renderAdvancedPerformanceOverlay(performanceStats_, GetScreenWidth() - 310, 10);
+    // renderAdvancedPerformanceOverlay(performanceStats_, GetScreenWidth() - 310, 10); // TEMPORARILY DISABLED
 
     // Projected labels
     renderProjectedLabels(camera, environment_, state_.isInBuilding, state_.currentBuilding);

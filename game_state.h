@@ -1,4 +1,3 @@
-// game_state.h (updated)
 #ifndef GAME_STATE_H
 #define GAME_STATE_H
 
@@ -10,6 +9,7 @@
 #include <functional>
 #include <chrono>
 #include <memory>
+#include <unordered_map>
 
 struct PerformanceMetrics {
     float averageFrameTime = 0.0f;
@@ -18,6 +18,38 @@ struct PerformanceMetrics {
     std::vector<float> frameTimeHistory;  // Last N frame times (e.g., limit to 100 for recent history)
 };
 
+/// \brief Versioned serializer for game state with migration support.
+class VersionedSerializer {
+public:
+    static constexpr uint32_t CURRENT_VERSION = 1;
+
+    /// \brief Serializes an object to stream.
+    /// \tparam T Type of object to serialize.
+    /// \param obj Object to serialize.
+    /// \param stream Output stream.
+    /// \return True on success.
+    template<typename T>
+    bool serialize(const T& obj, std::ostream& stream);
+
+    /// \brief Deserializes an object from stream.
+    /// \tparam T Type of object to deserialize.
+    /// \param obj Object to fill.
+    /// \param stream Input stream.
+    /// \return True on success.
+    template<typename T>
+    bool deserialize(T& obj, std::istream& stream);
+
+    /// \brief Registers a migration function for a version.
+    /// \param fromVersion Version to migrate from.
+    /// \param migrator Migration function.
+    void registerMigrator(uint32_t fromVersion, std::function<void(std::istream&)> migrator);
+
+private:
+    std::unordered_map<uint32_t, std::function<void(std::istream&)>> migrators_;
+};
+
+/// \brief Main game state struct.
+/// This holds all runtime game state data. To address SRP, consider splitting into sub-structs (e.g., PlayerState, UIState) in future.
 struct GameState {
     bool mouseReleased = false;
 
@@ -97,25 +129,42 @@ struct GameState {
     PerformanceMetrics metrics;
 
     // New: State validation methods
+    /// \brief Checks if state is valid.
+    /// \return True if valid.
     bool isValid() const;
+
+    /// \brief Validates and repairs invalid state.
     void validateAndRepair();
+
+    /// \brief Resets state to defaults.
     void resetToDefaults();
 
     // New: State change notifications
     using StateChangeCallback = std::function<void(const std::string& property)>;
+    /// \brief Adds a change listener.
+    /// \param callback Callback to add.
     void addChangeListener(StateChangeCallback callback);
-    void notifyChange(const std::string& property);  // Call this when changing state properties
+
+    /// \brief Notifies listeners of change.
+    /// \param property Changed property.
+    void notifyChange(const std::string& property);
     
     // New: Save/Load convenience methods
+    /// \brief Saves state to file.
+    /// \param filename File to save to.
+    /// \return True on success.
     bool saveState(const std::string& filename = "browserwind_save.dat") const;
+
+    /// \brief Loads state from file.
+    /// \param filename File to load from.
+    /// \return True on success.
     bool loadState(const std::string& filename = "browserwind_save.dat");
 
 private:
     std::vector<StateChangeCallback> changeListeners_;
-    // **PHASE 2 FIX**: Removed mutex - single-threaded game doesn't need thread safety
 };
 
-// New: Serialization functions
+// Standalone serialization functions (using VersionedSerializer internally)
 bool saveState(const GameState& state, const std::string& filename);
 bool loadState(GameState& state, const std::string& filename);
 

@@ -1,11 +1,50 @@
-// game_state.cpp (updated)
 #include "game_state.h"
 #include <fstream>
 #include <iostream>  // For debugging/error messages
 #include <algorithm>  // For std::min/std::max if needed in validation
 
+// Helper functions for binary serialization of strings and vectors
+void writeString(std::ostream& stream, const std::string& str) {
+    uint32_t len = static_cast<uint32_t>(str.size());
+    stream.write(reinterpret_cast<const char*>(&len), sizeof(len));
+    stream.write(str.data(), len);
+}
+
+std::string readString(std::istream& stream) {
+    uint32_t len;
+    stream.read(reinterpret_cast<char*>(&len), sizeof(len));
+    std::string str(len, '\0');
+    stream.read(&str[0], len);
+    return str;
+}
+
+template<typename T>
+bool VersionedSerializer::serialize(const T& obj, std::ostream& stream) {
+    uint32_t version = CURRENT_VERSION;
+    stream.write(reinterpret_cast<const char*>(&version), sizeof(version));
+    // Custom serialization for GameState (manual for now)
+    return true;  // Placeholder; implement per-type
+}
+
+template<typename T>
+bool VersionedSerializer::deserialize(T& obj, std::istream& stream) {
+    uint32_t version;
+    stream.read(reinterpret_cast<char*>(&version), sizeof(version));
+    if (version > CURRENT_VERSION) {
+        return false;  // Future version unsupported
+    }
+    if (auto it = migrators_.find(version); it != migrators_.end()) {
+        it->second(stream);
+    }
+    // Custom deserialization
+    return true;
+}
+
+void VersionedSerializer::registerMigrator(uint32_t fromVersion, std::function<void(std::istream&)> migrator) {
+    migrators_[fromVersion] = std::move(migrator);
+}
+
 bool GameState::isValid() const {
-    // **PHASE 2 FIX**: Removed mutex lock - single-threaded validation
     // Basic validation checks - expand as needed
     if (currentNPC < -1 || numDialogOptions < 0 || numDialogOptions > 3) return false;
     if (currentBuilding < -1) return false;
@@ -23,7 +62,6 @@ bool GameState::isValid() const {
 }
 
 void GameState::validateAndRepair() {
-    // **PHASE 2 FIX**: Removed mutex lock - single-threaded repair
     // Repair invalid states
     if (currentNPC < -1) currentNPC = -1;
     if (numDialogOptions < 0) numDialogOptions = 0;
@@ -50,12 +88,10 @@ void GameState::validateAndRepair() {
     for (int i = numDialogOptions; i < 3; ++i) {
         dialogOptions[i] = "";
     }
-    // **TEMP DEBUG**: Disable state change notification
-    // notifyChange("validated");
+    notifyChange("validated");
 }
 
 void GameState::resetToDefaults() {
-    // **PHASE 2 FIX**: Removed mutex lock - single-threaded reset
     // Reset all members to default values
     mouseReleased = false;
     isInDialog = false;
@@ -104,149 +140,158 @@ void GameState::resetToDefaults() {
     lastCameraPos = {0.0f, 0.0f, 0.0f};
     metrics = PerformanceMetrics{};
     changeListeners_.clear();
-    // **TEMP DEBUG**: Disable state change notification  
-    // notifyChange("reset");
+    notifyChange("reset");
 }
 
 void GameState::addChangeListener(StateChangeCallback callback) {
-    // **PHASE 2 FIX**: Removed mutex lock - single-threaded listener management
     changeListeners_.push_back(callback);
 }
 
 void GameState::notifyChange(const std::string& property) {
-    // **PHASE 2 FIX**: Removed mutex lock - single-threaded notification
     for (const auto& listener : changeListeners_) {
         listener(property);
     }
 }
 
 bool saveState(const GameState& state, const std::string& filename) {
-    std::ofstream file(filename);
+    std::ofstream file(filename, std::ios::binary);
     if (!file.is_open()) {
         std::cerr << "Failed to open save file: " << filename << std::endl;
         return false;
     }
 
-    // Save simple key-value pairs (expand for all members)
-    file << "mouseReleased=" << state.mouseReleased << "\n";
-    file << "isInDialog=" << state.isInDialog << "\n";
-    file << "currentNPC=" << state.currentNPC << "\n";
-    file << "dialogText=" << state.dialogText << "\n";  // Note: Escape if contains newlines
-    file << "numDialogOptions=" << state.numDialogOptions << "\n";
-    for (int i = 0; i < 3; ++i) {
-        file << "dialogOption" << i << "=" << state.dialogOptions[i] << "\n";
-    }
-    file << "showDialogWindow=" << state.showDialogWindow << "\n";
-    file << "isInBuilding=" << state.isInBuilding << "\n";
-    file << "currentBuilding=" << state.currentBuilding << "\n";
-    file << "showInteractPrompt=" << state.showInteractPrompt << "\n";
-    file << "interactPromptText=" << state.interactPromptText << "\n";
-    file << "lastOutdoorPositionX=" << state.lastOutdoorPosition.x << "\n";
-    file << "lastOutdoorPositionY=" << state.lastOutdoorPosition.y << "\n";
-    file << "lastOutdoorPositionZ=" << state.lastOutdoorPosition.z << "\n";
-    file << "playerY=" << state.playerY << "\n";
-    file << "isJumping=" << state.isJumping << "\n";
-    file << "isGrounded=" << state.isGrounded << "\n";
-    file << "jumpVelocity=" << state.jumpVelocity << "\n";
-    
-    // Player stats
-    file << "playerHealth=" << state.playerHealth << "\n";
-    file << "maxPlayerHealth=" << state.maxPlayerHealth << "\n";
-    file << "playerMana=" << state.playerMana << "\n";
-    file << "maxPlayerMana=" << state.maxPlayerMana << "\n";
-    file << "playerStamina=" << state.playerStamina << "\n";
-    file << "maxPlayerStamina=" << state.maxPlayerStamina << "\n";
-    file << "playerLevel=" << state.playerLevel << "\n";
-    file << "playerExperience=" << state.playerExperience << "\n";
-    
-    file << "lastSwingTime=" << state.lastSwingTime << "\n";
-    file << "swingsPerformed=" << state.swingsPerformed << "\n";
-    file << "meleeHits=" << state.meleeHits << "\n";
-    file << "score=" << state.score << "\n";
-    // Testing states
-    file << "testMouseCaptured=" << state.testMouseCaptured << "\n";
-    file << "testBuildingCollision=" << state.testBuildingCollision << "\n";
-    file << "testWASDMovement=" << state.testWASDMovement << "\n";
-    file << "testSpaceJump=" << state.testSpaceJump << "\n";
-    file << "testMouseLook=" << state.testMouseLook << "\n";
-    file << "testMeleeSwing=" << state.testMeleeSwing << "\n";
-    file << "testMeleeHitDetection=" << state.testMeleeHitDetection << "\n";
-    file << "testBuildingEntry=" << state.testBuildingEntry << "\n";
-    file << "testNPCInteraction=" << state.testNPCInteraction << "\n";
-    file << "lastCameraPosX=" << state.lastCameraPos.x << "\n";
-    file << "lastCameraPosY=" << state.lastCameraPos.y << "\n";
-    file << "lastCameraPosZ=" << state.lastCameraPos.z << "\n";
-    // Performance metrics (simple for now; frameTimeHistory could be serialized as comma-separated)
-    file << "averageFrameTime=" << state.metrics.averageFrameTime << "\n";
-    file << "totalFrames=" << state.metrics.totalFrames << "\n";
-    // Note: sessionStart not saved (restarts on load); frameTimeHistory not saved for simplicity
+    uint32_t version = VersionedSerializer::CURRENT_VERSION;
+    file.write(reinterpret_cast<const char*>(&version), sizeof(version));
 
+    // Binary write for all fields (manual)
+    file.write(reinterpret_cast<const char*>(&state.mouseReleased), sizeof(bool));
+    file.write(reinterpret_cast<const char*>(&state.isInDialog), sizeof(bool));
+    file.write(reinterpret_cast<const char*>(&state.currentNPC), sizeof(int));
+    writeString(file, state.dialogText);
+    file.write(reinterpret_cast<const char*>(&state.numDialogOptions), sizeof(int));
+    for (int i = 0; i < 3; ++i) {
+        writeString(file, state.dialogOptions[i]);
+    }
+    file.write(reinterpret_cast<const char*>(&state.showDialogWindow), sizeof(bool));
+    file.write(reinterpret_cast<const char*>(&state.isInBuilding), sizeof(bool));
+    file.write(reinterpret_cast<const char*>(&state.currentBuilding), sizeof(int));
+    file.write(reinterpret_cast<const char*>(&state.showInteractPrompt), sizeof(bool));
+    writeString(file, state.interactPromptText);
+    file.write(reinterpret_cast<const char*>(&state.lastOutdoorPosition), sizeof(Vector3));
+    file.write(reinterpret_cast<const char*>(&state.playerY), sizeof(float));
+    file.write(reinterpret_cast<const char*>(&state.isJumping), sizeof(bool));
+    file.write(reinterpret_cast<const char*>(&state.isGrounded), sizeof(bool));
+    file.write(reinterpret_cast<const char*>(&state.jumpVelocity), sizeof(float));
+
+    // Player stats
+    file.write(reinterpret_cast<const char*>(&state.playerHealth), sizeof(int));
+    file.write(reinterpret_cast<const char*>(&state.maxPlayerHealth), sizeof(int));
+    file.write(reinterpret_cast<const char*>(&state.playerMana), sizeof(int));
+    file.write(reinterpret_cast<const char*>(&state.maxPlayerMana), sizeof(int));
+    file.write(reinterpret_cast<const char*>(&state.playerStamina), sizeof(int));
+    file.write(reinterpret_cast<const char*>(&state.maxPlayerStamina), sizeof(int));
+    file.write(reinterpret_cast<const char*>(&state.playerLevel), sizeof(int));
+    file.write(reinterpret_cast<const char*>(&state.playerExperience), sizeof(int));
+
+    file.write(reinterpret_cast<const char*>(&state.lastSwingTime), sizeof(float));
+    file.write(reinterpret_cast<const char*>(&state.swingsPerformed), sizeof(int));
+    file.write(reinterpret_cast<const char*>(&state.meleeHits), sizeof(int));
+    file.write(reinterpret_cast<const char*>(&state.score), sizeof(int));
+
+    // Testing states
+    file.write(reinterpret_cast<const char*>(&state.testMouseCaptured), sizeof(bool));
+    file.write(reinterpret_cast<const char*>(&state.testBuildingCollision), sizeof(bool));
+    file.write(reinterpret_cast<const char*>(&state.testWASDMovement), sizeof(bool));
+    file.write(reinterpret_cast<const char*>(&state.testSpaceJump), sizeof(bool));
+    file.write(reinterpret_cast<const char*>(&state.testMouseLook), sizeof(bool));
+    file.write(reinterpret_cast<const char*>(&state.testMeleeSwing), sizeof(bool));
+    file.write(reinterpret_cast<const char*>(&state.testMeleeHitDetection), sizeof(bool));
+    file.write(reinterpret_cast<const char*>(&state.testBuildingEntry), sizeof(bool));
+    file.write(reinterpret_cast<const char*>(&state.testNPCInteraction), sizeof(bool));
+    file.write(reinterpret_cast<const char*>(&state.lastCameraPos), sizeof(Vector3));
+
+    // Performance metrics (simple; skip frameTimeHistory for now)
+    file.write(reinterpret_cast<const char*>(&state.metrics.averageFrameTime), sizeof(float));
+    file.write(reinterpret_cast<const char*>(&state.metrics.totalFrames), sizeof(int));
+
+    if (!file.good()) {
+        std::cerr << "Error writing save file" << std::endl;
+        return false;
+    }
     return true;
 }
 
 bool loadState(GameState& state, const std::string& filename) {
-    std::ifstream file(filename);
+    std::ifstream file(filename, std::ios::binary);
     if (!file.is_open()) {
         std::cerr << "Failed to open load file: " << filename << std::endl;
+        state.resetToDefaults();  // Error recovery: reset to defaults
         return false;
     }
 
-    std::string line;
-    while (std::getline(file, line)) {
-        size_t pos = line.find('=');
-        if (pos == std::string::npos) continue;
-        std::string key = line.substr(0, pos);
-        std::string value = line.substr(pos + 1);
+    uint32_t version;
+    file.read(reinterpret_cast<char*>(&version), sizeof(version));
+    if (version != VersionedSerializer::CURRENT_VERSION) {
+        std::cerr << "Unsupported save version: " << version << std::endl;
+        state.resetToDefaults();  // Error recovery
+        return false;
+    }
 
-        if (key == "mouseReleased") state.mouseReleased = (value == "1");
-        else if (key == "isInDialog") state.isInDialog = (value == "1");
-        else if (key == "currentNPC") state.currentNPC = std::stoi(value);
-        else if (key == "dialogText") state.dialogText = value;
-        else if (key == "numDialogOptions") state.numDialogOptions = std::stoi(value);
-        else if (key == "dialogOption0") state.dialogOptions[0] = value;
-        else if (key == "dialogOption1") state.dialogOptions[1] = value;
-        else if (key == "dialogOption2") state.dialogOptions[2] = value;
-        else if (key == "showDialogWindow") state.showDialogWindow = (value == "1");
-        else if (key == "isInBuilding") state.isInBuilding = (value == "1");
-        else if (key == "currentBuilding") state.currentBuilding = std::stoi(value);
-        else if (key == "showInteractPrompt") state.showInteractPrompt = (value == "1");
-        else if (key == "interactPromptText") state.interactPromptText = value;
-        else if (key == "lastOutdoorPositionX") state.lastOutdoorPosition.x = std::stof(value);
-        else if (key == "lastOutdoorPositionY") state.lastOutdoorPosition.y = std::stof(value);
-        else if (key == "lastOutdoorPositionZ") state.lastOutdoorPosition.z = std::stof(value);
-        else if (key == "playerY") state.playerY = std::stof(value);
-        else if (key == "isJumping") state.isJumping = (value == "1");
-        else if (key == "isGrounded") state.isGrounded = (value == "1");
-        else if (key == "jumpVelocity") state.jumpVelocity = std::stof(value);
-        
-        // Player stats loading
-        else if (key == "playerHealth") state.playerHealth = std::stoi(value);
-        else if (key == "maxPlayerHealth") state.maxPlayerHealth = std::stoi(value);
-        else if (key == "playerMana") state.playerMana = std::stoi(value);
-        else if (key == "maxPlayerMana") state.maxPlayerMana = std::stoi(value);
-        else if (key == "playerStamina") state.playerStamina = std::stoi(value);
-        else if (key == "maxPlayerStamina") state.maxPlayerStamina = std::stoi(value);
-        else if (key == "playerLevel") state.playerLevel = std::stoi(value);
-        else if (key == "playerExperience") state.playerExperience = std::stoi(value);
-        
-        else if (key == "lastSwingTime") state.lastSwingTime = std::stof(value);
-        else if (key == "swingsPerformed") state.swingsPerformed = std::stoi(value);
-        else if (key == "meleeHits") state.meleeHits = std::stoi(value);
-        else if (key == "score") state.score = std::stoi(value);
-        else if (key == "testMouseCaptured") state.testMouseCaptured = (value == "1");
-        else if (key == "testBuildingCollision") state.testBuildingCollision = (value == "1");
-        else if (key == "testWASDMovement") state.testWASDMovement = (value == "1");
-        else if (key == "testSpaceJump") state.testSpaceJump = (value == "1");
-        else if (key == "testMouseLook") state.testMouseLook = (value == "1");
-        else if (key == "testMeleeSwing") state.testMeleeSwing = (value == "1");
-        else if (key == "testMeleeHitDetection") state.testMeleeHitDetection = (value == "1");
-        else if (key == "testBuildingEntry") state.testBuildingEntry = (value == "1");
-        else if (key == "testNPCInteraction") state.testNPCInteraction = (value == "1");
-        else if (key == "lastCameraPosX") state.lastCameraPos.x = std::stof(value);
-        else if (key == "lastCameraPosY") state.lastCameraPos.y = std::stof(value);
-        else if (key == "lastCameraPosZ") state.lastCameraPos.z = std::stof(value);
-        else if (key == "averageFrameTime") state.metrics.averageFrameTime = std::stof(value);
-        else if (key == "totalFrames") state.metrics.totalFrames = std::stoi(value);
+    // Binary read for all fields
+    file.read(reinterpret_cast<char*>(&state.mouseReleased), sizeof(bool));
+    file.read(reinterpret_cast<char*>(&state.isInDialog), sizeof(bool));
+    file.read(reinterpret_cast<char*>(&state.currentNPC), sizeof(int));
+    state.dialogText = readString(file);
+    file.read(reinterpret_cast<char*>(&state.numDialogOptions), sizeof(int));
+    for (int i = 0; i < 3; ++i) {
+        state.dialogOptions[i] = readString(file);
+    }
+    file.read(reinterpret_cast<char*>(&state.showDialogWindow), sizeof(bool));
+    file.read(reinterpret_cast<char*>(&state.isInBuilding), sizeof(bool));
+    file.read(reinterpret_cast<char*>(&state.currentBuilding), sizeof(int));
+    file.read(reinterpret_cast<char*>(&state.showInteractPrompt), sizeof(bool));
+    state.interactPromptText = readString(file);
+    file.read(reinterpret_cast<char*>(&state.lastOutdoorPosition), sizeof(Vector3));
+    file.read(reinterpret_cast<char*>(&state.playerY), sizeof(float));
+    file.read(reinterpret_cast<char*>(&state.isJumping), sizeof(bool));
+    file.read(reinterpret_cast<char*>(&state.isGrounded), sizeof(bool));
+    file.read(reinterpret_cast<char*>(&state.jumpVelocity), sizeof(float));
+
+    // Player stats
+    file.read(reinterpret_cast<char*>(&state.playerHealth), sizeof(int));
+    file.read(reinterpret_cast<char*>(&state.maxPlayerHealth), sizeof(int));
+    file.read(reinterpret_cast<char*>(&state.playerMana), sizeof(int));
+    file.read(reinterpret_cast<char*>(&state.maxPlayerMana), sizeof(int));
+    file.read(reinterpret_cast<char*>(&state.playerStamina), sizeof(int));
+    file.read(reinterpret_cast<char*>(&state.maxPlayerStamina), sizeof(int));
+    file.read(reinterpret_cast<char*>(&state.playerLevel), sizeof(int));
+    file.read(reinterpret_cast<char*>(&state.playerExperience), sizeof(int));
+
+    file.read(reinterpret_cast<char*>(&state.lastSwingTime), sizeof(float));
+    file.read(reinterpret_cast<char*>(&state.swingsPerformed), sizeof(int));
+    file.read(reinterpret_cast<char*>(&state.meleeHits), sizeof(int));
+    file.read(reinterpret_cast<char*>(&state.score), sizeof(int));
+
+    // Testing states
+    file.read(reinterpret_cast<char*>(&state.testMouseCaptured), sizeof(bool));
+    file.read(reinterpret_cast<char*>(&state.testBuildingCollision), sizeof(bool));
+    file.read(reinterpret_cast<char*>(&state.testWASDMovement), sizeof(bool));
+    file.read(reinterpret_cast<char*>(&state.testSpaceJump), sizeof(bool));
+    file.read(reinterpret_cast<char*>(&state.testMouseLook), sizeof(bool));
+    file.read(reinterpret_cast<char*>(&state.testMeleeSwing), sizeof(bool));
+    file.read(reinterpret_cast<char*>(&state.testMeleeHitDetection), sizeof(bool));
+    file.read(reinterpret_cast<char*>(&state.testBuildingEntry), sizeof(bool));
+    file.read(reinterpret_cast<char*>(&state.testNPCInteraction), sizeof(bool));
+    file.read(reinterpret_cast<char*>(&state.lastCameraPos), sizeof(Vector3));
+
+    // Performance metrics
+    file.read(reinterpret_cast<char*>(&state.metrics.averageFrameTime), sizeof(float));
+    file.read(reinterpret_cast<char*>(&state.metrics.totalFrames), sizeof(int));
+
+    if (!file.good()) {
+        std::cerr << "Error reading save file" << std::endl;
+        state.resetToDefaults();  // Error recovery
+        return false;
     }
 
     // Validate after load

@@ -6,7 +6,7 @@
 #include "input_manager.h"
 #include "environment_manager.h"
 #include "game_state.h"
-#include "performance.h"
+#include "performance_system.h"
 #include "npc.h"
 #include <memory>
 

@@ -9,7 +9,7 @@ void MenuSystem::handleEscMenuInput() {
     }
 }
 
-void MenuSystem::handleInventoryInput(const std::unique_ptr<InventorySystem>& inventorySystem) {
+void MenuSystem::handleInventoryInput(InventorySystem& inventorySystem) {
     if (state_.showInventoryWindow && !state_.enhancedInput.isMouseCaptured()) {
         handleInventoryClick(inventorySystem);
     }
@@ -69,7 +69,7 @@ void MenuSystem::handleEscMenuClick() {
     }
 }
 
-void MenuSystem::handleInventoryClick(const std::unique_ptr<InventorySystem>& inventorySystem) {
+void MenuSystem::handleInventoryClick(InventorySystem& inventorySystem) {
     Vector2 mousePos = GetMousePosition();
     int screenWidth = GetScreenWidth();
     int screenHeight = GetScreenHeight();
@@ -84,7 +84,7 @@ void MenuSystem::handleInventoryClick(const std::unique_ptr<InventorySystem>& in
 
         int itemIndex = (mousePos.y - itemListY) / itemHeight;
         if (itemIndex >= 0 && itemIndex < 12 && mousePos.x >= invX + 20 && mousePos.x <= invX + 470) {
-            auto items = inventorySystem->getInventory().getAllItems();
+            auto items = inventorySystem.getInventory().getAllItems();
             if (itemIndex < (int)items.size()) {
                 auto clickedItem = items[itemIndex];
                 state_.lastClickedItem = clickedItem->getName();
@@ -94,13 +94,13 @@ void MenuSystem::handleInventoryClick(const std::unique_ptr<InventorySystem>& in
 
                 // **AUTO-EQUIP/USE LOGIC** - Moved here
                 if (clickedItem->getType() == ItemType::WEAPON || clickedItem->getType() == ItemType::ARMOR) {
-                    if (inventorySystem->equipItemFromInventory(clickedItem->getName())) {
+                    if (inventorySystem.equipItemFromInventory(clickedItem->getName())) {
                         std::cout << "Equipped: " << clickedItem->getName() << std::endl;
                     } else {
                         std::cout << "Cannot equip: " << clickedItem->getName() << std::endl;
                     }
                 } else if (clickedItem->getType() == ItemType::CONSUMABLE) {
-                    inventorySystem->getInventory().removeItem(clickedItem, 1);
+                    inventorySystem.getInventory().removeItem(clickedItem, 1);
 
                     auto potion = std::dynamic_pointer_cast<AlchemicalPotion>(clickedItem);
                     if (potion) {

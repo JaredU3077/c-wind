@@ -21,7 +21,7 @@ LDFLAGS = -L/opt/homebrew/opt/raylib/lib -lraylib -framework OpenGL -framework C
 # LDFLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 
 # Source files (CLEANED AND OPTIMIZED)
-SRC = main.cpp game.cpp menu_system.cpp render_system.cpp environment_manager.cpp npc.cpp player_system.cpp world_builder.cpp game_state.cpp input_manager.cpp config.cpp debug_system.cpp collision_system.cpp environmental_object.cpp dialog_system.cpp combat.cpp render_utils.cpp interaction_system.cpp performance.cpp ui_system.cpp inventory.cpp ui_theme_optimized.cpp ui_notification.cpp ui_animation.cpp ui_audio.cpp math_utils.cpp
+SRC = main.cpp game.cpp menu_system.cpp render_system.cpp environment_manager.cpp npc.cpp player_system.cpp world_builder.cpp game_state.cpp input_manager.cpp config.cpp debug_system.cpp collision_system.cpp environmental_object.cpp dialog_system.cpp combat.cpp render_utils.cpp interaction_system.cpp performance_system.cpp ui_system.cpp inventory.cpp ui_theme_optimized.cpp ui_notification.cpp ui_animation.cpp ui_audio.cpp math_utils.cpp
 
 # Alternative main using Game Engine class (for testing)
 SRC_ENGINE = main_new.cpp environment_manager.cpp npc.cpp player_system.cpp world_builder.cpp game_state.cpp input_manager.cpp config.cpp
