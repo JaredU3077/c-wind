@@ -2,6 +2,7 @@
 #include "math_utils.h"
 #include "constants.h"
 #include "collision_system.h"  // For checkPointInBounds
+#include <iostream>  // For std::cout debug output
 #include <cmath>
 
 void handleInteractions(Camera3D& camera, EnvironmentManager& environment, GameState& state, float currentTime) {
@@ -11,9 +12,20 @@ void handleInteractions(Camera3D& camera, EnvironmentManager& environment, GameS
 
     // **PHASE 2 ENHANCEMENT**: Interaction input using enhanced input with built-in debouncing
     bool eKeyPressed = state.enhancedInput.isActionPressed("interact") && (currentTime - lastEPressTime) > 0.3f;
+    bool escPressed = state.enhancedInput.isActionPressed("pause") && (currentTime - lastEPressTime) > 0.3f;
 
     if (eKeyPressed) {
         lastEPressTime = currentTime;
+    }
+
+    // **FIX NPC DIALOG FREEZE**: Allow ESC to exit dialog
+    if (escPressed && state.isInDialog) {
+        std::cout << "ESC pressed during dialog - exiting dialog" << std::endl;
+        state.isInDialog = false;
+        state.numDialogOptions = 0;
+        // Re-capture mouse for gameplay
+        state.enhancedInput.setMouseCaptured(true);
+        return;  // Exit early to prevent further processing
     }
 
     // Building interactions are now handled below with priority logic

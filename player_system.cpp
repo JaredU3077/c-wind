@@ -1,42 +1,43 @@
-// player_system.cpp
 #include "player_system.h"
 #include "collision_system.h"
 #include "constants.h"
 #include "raylib.h"
-#include "raymath.h"  // For Vector3Subtract, Vector3Add
+#include "raymath.h"  // For Vector3Subtract, Vector3Add, Vector3Normalize, Vector3CrossProduct, Vector3Scale
 #include "math_utils.h"  // For MathUtils::distance3D
 #include <iostream>  // For std::cout debug output
 
 void updatePlayer(Camera3D& camera, GameState& state, const EnvironmentManager& environment, float deltaTime) {
     const float gravity = PlayerConstants::GRAVITY;
-    const float jumpStrength = PlayerConstants::JUMP_STRENGTH;
-    const float groundLevel = PlayerConstants::GROUND_LEVEL;
-    const float eyeHeight = PlayerConstants::EYE_HEIGHT;
-    const float PLAYER_RADIUS = PlayerConstants::RADIUS;
-    const float PLAYER_HEIGHT = PlayerConstants::HEIGHT;
+    const float jump_strength = PlayerConstants::JUMP_STRENGTH;
+    const float ground_level = PlayerConstants::GROUND_LEVEL;
+    const float eye_height = PlayerConstants::EYE_HEIGHT;
+    const float player_radius = PlayerConstants::RADIUS;
+    const float player_height = PlayerConstants::HEIGHT;
 
-    // **PHASE 2 ENHANCEMENT**: Handle jumping using enhanced input with action binding
+    // **JUMPING LOGIC** - Enhanced with input check and state management
     if (!state.isInDialog && !state.showInventoryWindow && !state.showEscMenu && 
         state.enhancedInput.isActionPressed("jump") && state.isGrounded && !state.isJumping) {
         state.isJumping = true;
         state.isGrounded = false;
-        state.jumpVelocity = jumpStrength;
+        state.jumpVelocity = jump_strength;
         state.testSpaceJump = true;
+        std::cout << "Jump initiated: velocity=" << state.jumpVelocity << std::endl;
     }
 
     if (state.isJumping || !state.isGrounded) {
         state.jumpVelocity += gravity * deltaTime;
         state.playerY += state.jumpVelocity * deltaTime;
 
-        if (state.playerY <= groundLevel) {
-            state.playerY = groundLevel;
+        if (state.playerY <= ground_level) {
+            state.playerY = ground_level;
             state.isJumping = false;
             state.isGrounded = true;
             state.jumpVelocity = 0.0f;
+            std::cout << "Landed: y=" << state.playerY << std::endl;
         }
     }
 
-    camera.position.y = state.playerY + eyeHeight;
+    camera.position.y = state.playerY + eye_height;
 
     // Only update camera when not in dialog mode, inventory closed, and ESC menu closed
     if (!state.isInDialog && !state.showInventoryWindow && !state.showEscMenu) {
@@ -51,33 +52,49 @@ void updatePlayer(Camera3D& camera, GameState& state, const EnvironmentManager& 
         Vector3 originalPosition = camera.position;
         
         // **MOUSE LOOK**: Handle camera rotation first
-        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) || true) {  // Always allow mouse look in FPS
-            Vector2 mouseDelta = GetMouseDelta();
-            const float sensitivity = PlayerConstants::MOUSE_SENSITIVITY;
+        Vector2 mouseDelta = state.enhancedInput.getMouseDelta();
+        const float sensitivity = PlayerConstants::MOUSE_SENSITIVITY;
 
-            // Update camera angles for smooth rotation
-            static float yaw = 0.0f;
-            static float pitch = 0.0f;
+        // Debug what we get from enhanced input
+        static int inputDebugCounter = 0;
+        if (inputDebugCounter++ % 60 == 0) {
+            std::cout << "PLAYER: Got mouse delta from input (" << mouseDelta.x << "," << mouseDelta.y << ")" << std::endl;
+        }
 
-            yaw -= mouseDelta.x * sensitivity;
-            pitch -= mouseDelta.y * sensitivity;
+        // Update camera angles for smooth rotation
+        static float yaw = 0.0f;
+        static float pitch = 0.0f;
 
-            // Clamp pitch to prevent over-rotation
-            if (pitch > PlayerConstants::MAX_PITCH) pitch = PlayerConstants::MAX_PITCH;
-            if (pitch < -PlayerConstants::MAX_PITCH) pitch = -PlayerConstants::MAX_PITCH;
-            
-            // Calculate new look direction
-            Vector3 direction = {
-                cosf(pitch) * sinf(yaw),
-                sinf(pitch),
-                cosf(pitch) * cosf(yaw)
-            };
-            camera.target = Vector3Add(originalPosition, direction);
+        // Debug mouse input application - more frequent
+        static int mouseDebugCounter = 0;
+        if (mouseDebugCounter++ % 60 == 0) {
+            std::cout << "CAMERA: Mouse delta (" << mouseDelta.x << ", " << mouseDelta.y
+                      << ") Yaw: " << yaw << " Pitch: " << pitch << std::endl;
+        }
+
+        yaw -= mouseDelta.x * sensitivity;
+        pitch -= mouseDelta.y * sensitivity;
+
+        // Clamp pitch to prevent over-rotation
+        pitch = std::clamp(pitch, -PlayerConstants::MAX_PITCH, PlayerConstants::MAX_PITCH);
+        
+        // Calculate new look direction
+        Vector3 direction = {
+            std::cos(pitch) * std::sin(yaw),
+            std::sin(pitch),
+            std::cos(pitch) * std::cos(yaw)
+        };
+        camera.target = Vector3Add(originalPosition, direction);
+
+        // Debug camera target
+        static int cameraTargetCounter = 0;
+        if (cameraTargetCounter++ % 120 == 0) {
+            std::cout << "CAMERA TARGET: (" << camera.target.x << ", " << camera.target.y << ", " << camera.target.z << ")" << std::endl;
         }
         
         // **LINEAR MOVEMENT**: Calculate precise movement vectors
         Vector3 forward = Vector3Normalize(Vector3Subtract(camera.target, camera.position));
-        Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, (Vector3){0.0f, 1.0f, 0.0f}));
+        Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, {0.0f, 1.0f, 0.0f}));
         
         // **CRITICAL FIX**: Ensure perfectly horizontal movement for linear strafing
         forward.y = 0.0f;
@@ -92,45 +109,16 @@ void updatePlayer(Camera3D& camera, GameState& state, const EnvironmentManager& 
         Vector3 movement = {0.0f, 0.0f, 0.0f};
         
         // **PHASE 2 ENHANCEMENT**: Movement input using enhanced input manager with action bindings
-        bool wPressed = state.enhancedInput.isActionDown("move_forward") || IsKeyDown(KEY_W);
-        bool sPressed = state.enhancedInput.isActionDown("move_backward") || IsKeyDown(KEY_S);
-        bool dPressed = state.enhancedInput.isActionDown("strafe_right") || IsKeyDown(KEY_D);
-        bool aPressed = state.enhancedInput.isActionDown("strafe_left") || IsKeyDown(KEY_A);
-
-        // Debug: Log key presses occasionally
-        static int keyDebugCounter = 0;
-        if (keyDebugCounter++ % 300 == 0) {  // Log every 5 seconds at 60 FPS
-            std::cout << "WASD Input: W=" << wPressed << ", S=" << sPressed
-                      << ", A=" << aPressed << ", D=" << dPressed << std::endl;
-
-            // Debug key bindings
-            int wKey = state.enhancedInput.getKeyBinding("move_forward");
-            int sKey = state.enhancedInput.getKeyBinding("move_backward");
-            std::cout << "Key Bindings: move_forward=" << wKey << " (KEY_W=" << KEY_W << "), move_backward=" << sKey << " (KEY_S=" << KEY_S << ")" << std::endl;
-
-            // Debug raw raylib key detection
-            bool wRaw = IsKeyDown(KEY_W);
-            bool sRaw = IsKeyDown(KEY_S);
-            bool aRaw = IsKeyDown(KEY_A);
-            bool dRaw = IsKeyDown(KEY_D);
-            std::cout << "Raw Raylib Keys: W=" << wRaw << ", S=" << sRaw << ", A=" << aRaw << ", D=" << dRaw << std::endl;
-
-            // Debug enhanced input manager state
-            bool wEnhanced = state.enhancedInput.isActionDown("move_forward");
-            bool wKeyDown = state.enhancedInput.isKeyDown(KEY_W);
-            std::cout << "Enhanced Input: isActionDown(move_forward)=" << wEnhanced << ", isKeyDown(KEY_W)=" << wKeyDown << std::endl;
-        }
-
-        if (wPressed) {
+        if (state.enhancedInput.isActionDown("move_forward")) {
             movement = Vector3Add(movement, Vector3Scale(forward, moveSpeed));
         }
-        if (sPressed) {
+        if (state.enhancedInput.isActionDown("move_backward")) {
             movement = Vector3Add(movement, Vector3Scale(forward, -moveSpeed));
         }
-        if (dPressed) {  // Strafe right - perfectly linear
+        if (state.enhancedInput.isActionDown("strafe_right")) {  // Strafe right - perfectly linear
             movement = Vector3Add(movement, Vector3Scale(right, moveSpeed));
         }
-        if (aPressed) {  // Strafe left - perfectly linear
+        if (state.enhancedInput.isActionDown("strafe_left")) {  // Strafe left - perfectly linear
             movement = Vector3Add(movement, Vector3Scale(right, -moveSpeed));
         }
         
@@ -141,20 +129,13 @@ void updatePlayer(Camera3D& camera, GameState& state, const EnvironmentManager& 
         Vector3 totalMovement = Vector3Subtract(intendedPosition, originalPosition);
         if (Vector3Length(totalMovement) > 0.01f) {
             static int moveCounter = 0;
-            moveCounter++;
-            if (moveCounter % 30 == 0) {  // Log every 30 movements
-                #ifdef BROWSERWIND_DEBUG
-                static int movementDebugCounter = 0;
-                if (movementDebugCounter++ % 1800 == 0) {  // Once every 30 seconds
-                    printf("Player movement: (%.3f, %.3f, %.3f) -> (%.3f, %.3f, %.3f)\n",
-                       originalPosition.x, originalPosition.y, originalPosition.z,
-                       intendedPosition.x, intendedPosition.y, intendedPosition.z);
-                }
-                #endif
+            if (++moveCounter % 30 == 0) {
+                std::cout << "Player movement: (" << totalMovement.x << ", " << totalMovement.y << ", " << totalMovement.z << ")" << std::endl;
+            }
         }
 
         // Apply collision detection and resolution
-        CollisionSystem::resolveCollisions(intendedPosition, originalPosition, PLAYER_RADIUS, PLAYER_HEIGHT, state.playerY, eyeHeight, groundLevel, environment, state.isInBuilding, state.currentBuilding);
+        CollisionSystem::resolveCollisions(intendedPosition, originalPosition, player_radius, player_height, state.playerY, eye_height, ground_level, environment, state.isInBuilding, state.currentBuilding);
 
         // Set final camera position after collision resolution
         camera.position = intendedPosition;
@@ -163,24 +144,16 @@ void updatePlayer(Camera3D& camera, GameState& state, const EnvironmentManager& 
         camera.target = Vector3Add(camera.position, viewDirection);
 
         // Update playerY based on new camera y
-        state.playerY = camera.position.y - eyeHeight;
+        state.playerY = camera.position.y - eye_height;
 
         // Debug: Log final position changes
         static Vector3 lastPosition = {0, 0, 0};
         if (MathUtils::distance3D(camera.position, lastPosition) > 0.1f) {
             static int posCounter = 0;
-            posCounter++;
-            if (posCounter % 30 == 0) {
-                #ifdef BROWSERWIND_DEBUG
-                static int positionDebugCounter = 0;
-                if (positionDebugCounter++ % 1800 == 0) {  // Once every 30 seconds
-                    printf("Final position: (%.1f, %.1f, %.1f) | In building: %d\n",
-                       camera.position.x, camera.position.y, camera.position.z, state.isInBuilding);
-                }
-                #endif
+            if (++posCounter % 30 == 0) {
+                std::cout << "Final position: (" << camera.position.x << ", " << camera.position.y << ", " << camera.position.z << ") | In building: " << state.isInBuilding << std::endl;
             }
             lastPosition = camera.position;
         }
     }
-    } // Close the main if statement for dialog/inventory/esc menu check
 }

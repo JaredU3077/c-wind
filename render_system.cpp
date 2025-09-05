@@ -96,14 +96,11 @@ void RenderSystem::render2DOverlays(const Camera3D& camera, float time) {
         DrawText(jumpText.c_str(), 10, 160, 16, WHITE);
     }
 
-    // TEMPORARILY DISABLE UI SYSTEM TO ISOLATE CRASH
-    /*
     // UI system
     {
         // PROFILE_SYSTEM(performanceStats_, ui); // TEMPORARILY DISABLED
         g_uiSystem->renderAllUI(camera, state_, time);
     }
-    */
 
     // Performance overlay
     // renderAdvancedPerformanceOverlay(performanceStats_, GetScreenWidth() - 310, 10); // TEMPORARILY DISABLED

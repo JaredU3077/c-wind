@@ -1,4 +1,3 @@
-// collision_system.h
 #ifndef COLLISION_SYSTEM_H
 #define COLLISION_SYSTEM_H
 
@@ -29,27 +28,63 @@ struct CollisionBounds {
     float rotation;
 };
 
+/// \brief System for handling collisions.
 class CollisionSystem {
 public:
-    static bool checkCollision([[maybe_unused]] const CollisionBounds& bounds1, [[maybe_unused]] const CollisionBounds& bounds2);
-    static bool checkPointInBounds([[maybe_unused]] Vector3 point, [[maybe_unused]] const CollisionBounds& bounds);
-    static BoundingBox boundsToBox([[maybe_unused]] const CollisionBounds& bounds);
+    /// \brief Checks collision between two bounds.
+    /// \param bounds1 First bounds.
+    /// \param bounds2 Second bounds.
+    /// \return True if colliding.
+    static bool checkCollision(const CollisionBounds& bounds1, const CollisionBounds& bounds2);
 
-    static void resolveCollisions([[maybe_unused]] Vector3& newPosition, [[maybe_unused]] const Vector3& originalPosition, [[maybe_unused]] float playerRadius, [[maybe_unused]] float playerHeight, [[maybe_unused]] float playerY, [[maybe_unused]] float eyeHeight, [[maybe_unused]] float groundLevel, [[maybe_unused]] const EnvironmentManager& environment, [[maybe_unused]] bool isInBuilding, [[maybe_unused]] int currentBuilding);
+    /// \brief Checks if point is in bounds.
+    /// \param point Point to check.
+    /// \param bounds Bounds to check against.
+    /// \return True if inside.
+    static bool checkPointInBounds(Vector3 point, const CollisionBounds& bounds);
+
+    /// \brief Converts bounds to bounding box.
+    /// \param bounds Bounds to convert.
+    /// \return Bounding box.
+    static BoundingBox boundsToBox(const CollisionBounds& bounds);
+
+    /// \brief Resolves collisions for player movement.
+    /// \param newPosition Intended position.
+    /// \param originalPosition Current position.
+    /// \param playerRadius Player radius.
+    /// \param playerHeight Player height.
+    /// \param playerY Player Y.
+    /// \param eyeHeight Eye height.
+    /// \param groundLevel Ground level.
+    /// \param environment Environment manager.
+    /// \param isInBuilding If in building.
+    /// \param currentBuilding Current building ID.
+    static void resolveCollisions(Vector3& newPosition, const Vector3& originalPosition, float playerRadius, float playerHeight, float playerY, float eyeHeight, float groundLevel, const EnvironmentManager& environment, bool isInBuilding, int currentBuilding);
 
     // Door-specific collision checking
-    static bool checkDoorCollision([[maybe_unused]] const CollisionBounds& playerBounds, [[maybe_unused]] const EnvironmentManager& environment, [[maybe_unused]] int& doorBuildingId);
-    static bool canEnterBuilding([[maybe_unused]] int buildingId, [[maybe_unused]] const EnvironmentManager& environment);
+    /// \brief Checks door collision.
+    /// \param playerBounds Player bounds.
+    /// \param environment Environment.
+    /// \param doorBuildingId Output building ID.
+    /// \return True if colliding with door.
+    static bool checkDoorCollision(const CollisionBounds& playerBounds, const EnvironmentManager& environment, int& doorBuildingId);
+
+    /// \brief Checks if can enter building.
+    /// \param buildingId Building ID.
+    /// \param environment Environment.
+    /// \return True if can enter.
+    static bool canEnterBuilding(int buildingId, const EnvironmentManager& environment);
 
 private:
-    static bool checkBoxCollision([[maybe_unused]] const CollisionBounds& box1, [[maybe_unused]] const CollisionBounds& bounds2);
-    static bool checkSphereCollision([[maybe_unused]] const CollisionBounds& sphere1, [[maybe_unused]] const CollisionBounds& bounds2);
-    static bool checkCylinderCollision([[maybe_unused]] const CollisionBounds& cyl1, [[maybe_unused]] const CollisionBounds& bounds2);
-    static bool checkCapsuleCollision([[maybe_unused]] const CollisionBounds& capsule1, [[maybe_unused]] const CollisionBounds& bounds2);
-    static bool pointInBox([[maybe_unused]] Vector3 point, [[maybe_unused]] const CollisionBounds& box);
-    static bool pointInSphere([[maybe_unused]] Vector3 point, [[maybe_unused]] const CollisionBounds& sphere);
-    static bool pointInCylinder([[maybe_unused]] Vector3 point, [[maybe_unused]] const CollisionBounds& cylinder);
-    static bool pointInCapsule([[maybe_unused]] Vector3 point, [[maybe_unused]] const CollisionBounds& capsule);
+    static bool checkBoxCollision(const CollisionBounds& box1, const CollisionBounds& bounds2);
+    static bool checkSphereCollision(const CollisionBounds& sphere1, const CollisionBounds& bounds2);
+    static bool checkCylinderCollision(const CollisionBounds& cyl1, const CollisionBounds& bounds2);
+    static bool checkCapsuleCollision(const CollisionBounds& capsule1, const CollisionBounds& bounds2);
+    static bool checkCapsuleCollision(const CollisionBounds& capsule, const BoundingBox& box);
+    static bool pointInBox(Vector3 point, const CollisionBounds& box);
+    static bool pointInSphere(Vector3 point, const CollisionBounds& sphere);
+    static bool pointInCylinder(Vector3 point, const CollisionBounds& cylinder);
+    static bool pointInCapsule(Vector3 point, const CollisionBounds& capsule);
 };
 
 #endif

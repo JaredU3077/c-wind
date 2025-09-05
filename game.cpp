@@ -253,8 +253,11 @@ void Game::Update(float deltaTime) {
 
 void Game::HandleInput(float deltaTime) {
     // **UPDATE INPUT MANAGER**
-    input_->update();  // Legacy
+    // input_->update();  // Legacy - DISABLED to prevent mouse delta conflicts
     enhancedInput_->update(deltaTime);
+
+    // **SYNC INPUT TO GAME STATE** - Critical for player system to get input
+    state_.enhancedInput = *enhancedInput_;  // Copy the updated input state to game state
 
     // **NEW: REGISTER CALLBACKS ONCE (move to Init if static)**
     static bool callbacksRegistered = false;
